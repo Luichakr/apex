@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getEnv } from "@/lib/env";
-import { getProvider } from "@/lib/providers";
+import { getOAuthProvider } from "@/lib/providers";
 import { verifyOAuthState } from "@/lib/oauth-state";
 import { saveAccount } from "@/lib/accounts";
 
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
   if (!(await verifyOAuthState("tiktok", state))) return back("error=bad_state");
 
   try {
-    const provider = getProvider("TIKTOK")!;
+    const provider = getOAuthProvider("TIKTOK")!;
     const result = await provider.handleCallback(code);
     await saveAccount(user.id, "TIKTOK", result);
     return back("connected=tiktok");

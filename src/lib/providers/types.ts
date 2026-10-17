@@ -66,10 +66,13 @@ export type PublishResult = {
 
 export interface SocialProvider {
   id: Provider;
-  /** Ссылка, куда отправить пользователя для авторизации. */
-  getAuthUrl(state: string): string;
+  /**
+   * Ссылка, куда отправить пользователя для авторизации.
+   * Необязательна: Telegram подключается токеном бота, без перехода на сайт.
+   */
+  getAuthUrl?(state: string): string;
   /** Обмен кода авторизации на токены + данные аккаунта. */
-  handleCallback(code: string): Promise<ConnectResult>;
+  handleCallback?(code: string): Promise<ConnectResult>;
   /** Опубликовать видео. */
   publish(account: DecryptedAccount, input: PublishInput): Promise<PublishResult>;
   /** Обновить access-токен, если истёк (вернуть актуальный аккаунт). */

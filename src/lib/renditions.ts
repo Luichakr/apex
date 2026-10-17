@@ -26,8 +26,13 @@ export type PreparedRendition = {
 /** Версия готовится один раз даже при параллельных задачах. */
 const inflight = new Map<string, Promise<PreparedRendition>>();
 
-export function renditionPathFor(masterPath: string, provider: Provider): string {
-  return masterPath.replace(/\.[^./]+$/, "") + `.${provider.toLowerCase()}.mp4`;
+export function renditionPathFor(
+  masterPath: string,
+  provider: Provider,
+  variant?: string | null
+): string {
+  const suffix = variant ? `${provider.toLowerCase()}-${variant}` : provider.toLowerCase();
+  return masterPath.replace(/\.[^./]+$/, "") + `.${suffix}.mp4`;
 }
 
 export class UnpublishableError extends Error {}
@@ -36,12 +41,13 @@ export async function prepareRendition(
   masterPath: string,
   masterMime: string,
   provider: Provider,
-  onProgress?: ProgressFn
+  onProgress?: ProgressFn,
+  variant?: string | null
 ): Promise<PreparedRendition> {
-  const out = renditionPathFor(masterPath, provider);
+  const out = renditionPathFor(masterPath, provider, variant);
   const existing = inflight.get(out);
   if (existing) return existing;
-  const job = doPrepare(masterPath, masterMime, provider, out, onProgress).finally(
+  const job = doPrepare(masterPath, masterMime, provider, out, onProgress, variant).finally(
     () => inflight.delete(out)
   );
   inflight.set(out, job);
@@ -53,10 +59,11 @@ async function doPrepare(
   masterMime: string,
   provider: Provider,
   out: string,
-  onProgress?: ProgressFn
+  onProgress?: ProgressFn,
+  variant?: string | null
 ): Promise<PreparedRendition> {
   const info: MediaInfo = await probeMedia(masterPath);
-  const { plan, warnings, errors } = planRendition(provider, info);
+  const { plan, warnings, errors } = planRendition(provider, info, variant);
   if (errors.length) throw new UnpublishableError(errors.join("; "));
 
   if (plan.kind === "original") {
@@ -102,8 +109,9 @@ async function doPrepare(
 
 /** Удалить производные версии (мастер не трогаем). */
 export async function removeRenditions(masterPath: string): Promise<void> {
-  const providers: Provider[] = ["INSTAGRAM", "TIKTOK", "YOUTUBE", "FACEBOOK"];
-  await Promise.all(
-    providers.map((p) => unlink(renditionPathFor(masterPath, p)).catch(() => {}))
-  );
+  const providers: Provider[] = ["INSTAGRAM", "TIKTOK", "YOUTUBE", "FACEBOOK", "TELEGRAM"];
+  await Promise.all([
+    ...providers.map((p) => unlink(renditionPathFor(masterPath, p)).catch(() => {})),
+    unlink(renditionPathFor(masterPath, "TELEGRAM", "story")).catch(() => {}),
+  ]);
 }

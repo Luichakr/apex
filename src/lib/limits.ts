@@ -17,6 +17,9 @@ export const CAPTION_LIMITS: Record<Provider, number> = {
   INSTAGRAM: 2200,
   YOUTUBE: 5000,
   FACEBOOK: 63206,
+  // Подпись к видео в канале — 1024 символа. У историй лимит выше (2048),
+  // но берём строгий: один и тот же текст должен подойти обоим.
+  TELEGRAM: 1024,
 };
 
 export const YOUTUBE_TITLE_LIMIT = 100;
@@ -33,6 +36,7 @@ export const PROVIDER_LABEL: Record<Provider, string> = {
   INSTAGRAM: "Instagram",
   YOUTUBE: "YouTube",
   FACEBOOK: "Facebook",
+  TELEGRAM: "Telegram",
 };
 
 export function utf8Bytes(text: string): number {
@@ -126,6 +130,15 @@ export function captionIssues(provider: Provider, text: string): CaptionIssues {
     const n = charCount(text);
     if (n > CAPTION_LIMITS.TIKTOK) {
       warnings.push(`${L}: текст ${n}/${CAPTION_LIMITS.TIKTOK} — в приложении придётся сократить`);
+    }
+  }
+
+  if (provider === "TELEGRAM") {
+    const n = charCount(text);
+    if (n > CAPTION_LIMITS.TELEGRAM) {
+      errors.push(
+        `${L}: подпись ${n}/${CAPTION_LIMITS.TELEGRAM} — у видео в Telegram лимит подписи меньше, чем у обычного сообщения`
+      );
     }
   }
 

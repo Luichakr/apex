@@ -228,6 +228,20 @@ export const PLATFORM_SPECS = {
     // Shorts: вертикальное/квадратное видео до 3 минут.
     shortsMaxDuration: 180,
   },
+  // Истории Telegram: требования жёсткие и непохожие на остальные —
+  // ровно 720×1280, H.265, ключевой кадр раз в секунду, до 30 МБ и 60 секунд.
+  TELEGRAM_STORY: {
+    width: 720,
+    height: 1280,
+    maxDuration: 60,
+    maxBytes: 30 * 1024 * 1024,
+    audioKbps: 128,
+    audioRate: 48_000,
+  },
+  // Видео в канал: Bot API принимает загрузку не больше 50 МБ.
+  TELEGRAM_CHANNEL: {
+    maxBytes: 50 * 1024 * 1024,
+  },
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -254,6 +268,12 @@ export type RenditionPlan =
       maxrateKbps: number | null;
       audio: AudioPlan;
       dropEditList: boolean;
+      /** Кодек видео. По умолчанию H.264. */
+      codec?: "h264" | "hevc";
+      /** Ключевой кадр раз в N секунд (по умолчанию 2). */
+      gopSeconds?: number;
+      /** Обрезать кадр до нужного размера вместо вписывания с полями. */
+      cropToFit?: boolean;
     };
 
 export type AudioPlan =
@@ -291,7 +311,11 @@ function clampFps(fps: number, min: number, max: number): number | null {
   return null; // оставляем как есть
 }
 
-export function planRendition(provider: Provider, info: MediaInfo): PlanResult {
+export function planRendition(
+  provider: Provider,
+  info: MediaInfo,
+  variant?: string | null
+): PlanResult {
   const warnings: string[] = [];
   const errors: string[] = [];
   const v = info.video;
@@ -303,6 +327,12 @@ export function planRendition(provider: Provider, info: MediaInfo): PlanResult {
     };
   }
   const isVertical = v.displayHeight >= v.displayWidth;
+
+  if (provider === "TELEGRAM") {
+    return variant === "story"
+      ? planTelegramStory(info, v, warnings)
+      : planTelegramChannel(info, v, warnings);
+  }
 
   if (provider === "YOUTUBE" || provider === "FACEBOOK") {
     if (provider === "YOUTUBE") {
@@ -474,6 +504,103 @@ export function planRendition(provider: Provider, info: MediaInfo): PlanResult {
   };
 }
 
+/**
+ * История Telegram. Формат задан жёстко, поэтому перекодируем почти всегда:
+ * кадр приводится к 720×1280 обрезкой по центру, чтобы не было полей.
+ */
+function planTelegramStory(
+  info: MediaInfo,
+  v: VideoStreamInfo,
+  warnings: string[]
+): PlanResult {
+  const s = PLATFORM_SPECS.TELEGRAM_STORY;
+  const errors: string[] = [];
+  if (info.duration > s.maxDuration) {
+    errors.push(`Telegram: история ${fmtDur(info.duration)} — максимум 60 секунд`);
+  }
+  if (Math.abs(v.displayWidth / v.displayHeight - 720 / 1280) > 0.02) {
+    warnings.push("Telegram: кадр не 9:16 — для истории он будет обрезан по центру");
+  }
+  // Бюджет на 30 МБ с запасом; у коротких роликов потолок не мешает.
+  const budgetKbps = info.duration
+    ? Math.floor((s.maxBytes * 8 * 0.9) / info.duration / 1000) - s.audioKbps
+    : 4000;
+  return {
+    plan: {
+      kind: "encode",
+      reason: "перекодирование под историю Telegram: 720×1280, H.265",
+      width: s.width,
+      height: s.height,
+      fps: clampFps(v.fps, 23, 60),
+      tonemap: v.hdr,
+      crf: 26, // H.265 при том же числе даёт заметно меньший файл, чем H.264
+      preset: "medium",
+      maxrateKbps: Math.max(1200, Math.min(8000, budgetKbps)),
+      audio: audioFor(info, { kbps: s.audioKbps, rate: s.audioRate, maxChannels: 2, allowCopy: false }),
+      dropEditList: true,
+      codec: "hevc",
+      gopSeconds: 1, // требование Telegram: ключевой кадр каждую секунду
+      cropToFit: true,
+    },
+    warnings,
+    errors,
+  };
+}
+
+/** Видео в канал: обычный H.264, лишь бы влезало в лимит загрузки Bot API. */
+function planTelegramChannel(
+  info: MediaInfo,
+  v: VideoStreamInfo,
+  warnings: string[]
+): PlanResult {
+  const s = PLATFORM_SPECS.TELEGRAM_CHANNEL;
+  const fpsFix = clampFps(v.fps, 23, 60);
+  const fits = info.sizeBytes <= s.maxBytes * 0.95;
+  const compliant =
+    v.codec === "h264" && v.pixFmt === "yuv420p" && !v.hdr && !v.interlaced && fpsFix === null;
+
+  if (compliant && fits && isMp4Family(info)) {
+    return {
+      plan: {
+        kind: "remux",
+        reason: "файл уже подходит Telegram — перепаковка без перекодирования",
+        audio: info.audio ? { mode: "copy" } : { mode: "none" },
+        dropEditList: true,
+      },
+      warnings,
+      errors: [],
+    };
+  }
+
+  const dims = fitInside(v.displayWidth, v.displayHeight, { maxLong: 1920 });
+  const budgetKbps = info.duration
+    ? Math.floor((s.maxBytes * 8 * 0.9) / info.duration / 1000) - 128
+    : 8000;
+  if (budgetKbps < 1500) {
+    warnings.push(
+      "Telegram: бот может загрузить не больше 50 МБ — длинное видео сильно сожмётся"
+    );
+  }
+  return {
+    plan: {
+      kind: "encode",
+      reason: fits
+        ? "перекодирование под Telegram"
+        : "перекодирование: файл больше 50 МБ, которые принимает бот",
+      ...dims,
+      fps: fpsFix,
+      tonemap: v.hdr,
+      crf: 20,
+      preset: "medium",
+      maxrateKbps: Math.max(800, Math.min(12_000, budgetKbps)),
+      audio: audioFor(info, { kbps: 128, rate: 48_000, maxChannels: 2, allowCopy: false }),
+      dropEditList: true,
+    },
+    warnings,
+    errors: [],
+  };
+}
+
 function audioFor(
   info: MediaInfo,
   o: { kbps: number; rate: number; maxChannels: number; allowCopy: boolean }
@@ -579,31 +706,42 @@ export async function buildFfmpegArgs(
     const vf: string[] = [];
     if (plan.tonemap) vf.push(await tonemapChain());
     if (plan.fps) vf.push(`fps=${plan.fps}`);
-    vf.push(
-      `scale=${plan.width}:${plan.height}:flags=lanczos+accurate_rnd+full_chroma_int`,
-      "setsar=1",
-      "format=yuv420p"
-    );
+    if (plan.cropToFit) {
+      // Сначала заполняем кадр целиком, затем срезаем лишнее по центру —
+      // чёрных полей в истории быть не должно.
+      vf.push(
+        `scale=${plan.width}:${plan.height}:force_original_aspect_ratio=increase:flags=lanczos+accurate_rnd+full_chroma_int`,
+        `crop=${plan.width}:${plan.height}`,
+        "setsar=1",
+        "format=yuv420p"
+      );
+    } else {
+      vf.push(
+        `scale=${plan.width}:${plan.height}:flags=lanczos+accurate_rnd+full_chroma_int`,
+        "setsar=1",
+        "format=yuv420p"
+      );
+    }
     const fps = plan.fps ?? info.video?.fps ?? 30;
-    const gop = Math.max(24, Math.round(fps * 2));
+    const gop = Math.max(12, Math.round(fps * (plan.gopSeconds ?? 2)));
     args.push(
       "-vf",
       vf.join(","),
       "-c:v",
-      "libx264",
+      plan.codec === "hevc" ? "libx265" : "libx264",
+      ...(plan.codec === "hevc" ? ["-tag:v", "hvc1"] : ["-profile:v", "high"]),
       "-preset",
       plan.preset,
       "-crf",
       String(plan.crf),
-      "-profile:v",
-      "high",
       "-pix_fmt",
       "yuv420p",
       // Закрытый GOP с ключевым кадром каждые 2 секунды (требование Instagram).
       "-g",
       String(gop),
-      "-x264-params",
-      "open-gop=0:scenecut=40",
+      ...(plan.codec === "hevc"
+        ? ["-x265-params", `keyint=${gop}:min-keyint=${gop}:open-gop=0:log-level=error`]
+        : ["-x264-params", "open-gop=0:scenecut=40"]),
       "-colorspace",
       "bt709",
       "-color_primaries",
@@ -707,6 +845,31 @@ export function verifyRendition(provider: Provider, out: MediaInfo): string[] {
     if (!["h264", "hevc"].includes(v.codec)) issues.push(`кодек ${v.codec}`);
     if (out.audio && out.audio.sampleRate > 48_000) issues.push("аудио > 48 кГц");
   }
+  if (provider === "TELEGRAM") {
+    // Проверяем только то, что обязательно: в историю уходит строго 720×1280.
+    if (v.displayWidth === 720 && v.displayHeight === 1280) {
+      const s = PLATFORM_SPECS.TELEGRAM_STORY;
+      if (out.sizeBytes > s.maxBytes) issues.push(`размер ${(out.sizeBytes / 1048576).toFixed(0)} МБ > 30 МБ`);
+      if (out.duration > s.maxDuration + 0.5) issues.push("длиннее 60 секунд");
+    } else if (out.sizeBytes > PLATFORM_SPECS.TELEGRAM_CHANNEL.maxBytes) {
+      issues.push(`размер ${(out.sizeBytes / 1048576).toFixed(0)} МБ > 50 МБ`);
+    }
+  }
+
+  if (provider === "TELEGRAM") {
+    // 720×1280 на выходе означает, что это версия под историю.
+    if (v.displayWidth === 720 && v.displayHeight === 1280) {
+      const t = PLATFORM_SPECS.TELEGRAM_STORY;
+      if (out.sizeBytes > t.maxBytes) {
+        issues.push(`размер ${(out.sizeBytes / 1048576).toFixed(0)} МБ > 30 МБ`);
+      }
+      if (out.duration > t.maxDuration + 0.5) issues.push("длиннее 60 секунд");
+      if (v.codec !== "hevc") issues.push(`кодек ${v.codec}, а нужен H.265`);
+    } else if (out.sizeBytes > PLATFORM_SPECS.TELEGRAM_CHANNEL.maxBytes) {
+      issues.push(`размер ${(out.sizeBytes / 1048576).toFixed(0)} МБ > 50 МБ`);
+    }
+  }
+
   if (provider === "TIKTOK") {
     const s = PLATFORM_SPECS.TIKTOK;
     if (Math.max(v.displayWidth, v.displayHeight) > s.maxSide) issues.push("сторона > 4096");

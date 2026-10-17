@@ -16,7 +16,7 @@ export default async function ComposePage() {
   const accounts = await prisma.socialAccount.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "asc" },
-    select: { id: true, provider: true, displayName: true },
+    select: { id: true, provider: true, displayName: true, meta: true },
   });
 
   return (

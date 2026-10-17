@@ -19,7 +19,19 @@ import {
   youtubeTitleFrom,
 } from "@/lib/limits";
 
-type Account = { id: string; provider: string; displayName: string | null };
+type Account = {
+  id: string;
+  provider: string;
+  displayName: string | null;
+  /** У Telegram важно, канал это или истории: правила разные. */
+  meta?: unknown;
+};
+
+/** "channel" | "story" у Telegram, иначе ничего. */
+function variantOf(a: Account | undefined): string | null {
+  const m = a?.meta as { kind?: unknown } | null | undefined;
+  return typeof m?.kind === "string" ? m.kind : null;
+}
 type VideoMeta = { width: number; height: number; duration: number };
 
 const MAX_BYTES = 4 * 1024 * 1024 * 1024;
@@ -90,6 +102,20 @@ export default function ComposeForm({ accounts }: { accounts: Account[] }) {
     return Array.from(set);
   }, [selected, accounts]);
 
+  /** Выбранные назначения: по одному на аккаунт — Telegram бывает дважды. */
+  const destinations = useMemo(
+    () =>
+      selected
+        .map((id) => accounts.find((a) => a.id === id))
+        .filter((a): a is Account => Boolean(a))
+        .map((a) => ({
+          account: a,
+          provider: a.provider as Provider,
+          variant: variantOf(a),
+        })),
+    [selected, accounts]
+  );
+
   const effective = (p: Provider) => (overrides[p]?.trim() ? overrides[p].trim() : caption);
 
   // Проверки текста по сетям.
@@ -121,8 +147,11 @@ export default function ComposeForm({ accounts }: { accounts: Account[] }) {
       if (meta.duration > 900) errors.push("Instagram: видео длиннее 15 минут");
     }
     if (providers.includes("TIKTOK") && meta.duration > 600) errors.push("TikTok: видео длиннее 10 минут");
+    if (destinations.some((d) => d.variant === "story") && meta.duration > 60) {
+      errors.push("Telegram: история не может быть длиннее 60 секунд");
+    }
     return { errors, warnings };
-  }, [file, meta, providers]);
+  }, [file, meta, providers, destinations]);
 
   const blocking = [...videoIssues.errors, ...textIssues.errors];
   const busy = phase !== "idle";
@@ -286,14 +315,15 @@ export default function ComposeForm({ accounts }: { accounts: Account[] }) {
               Как это будет выглядеть.
             </h2>
             <div className="previews">
-              {providers.map((p) => (
+              {destinations.map((d) => (
                 <NetworkPreview
-                  key={p}
-                  provider={p}
+                  key={d.account.id}
+                  provider={d.provider}
+                  variant={d.variant}
                   videoUrl={url}
-                  caption={effective(p)}
+                  caption={effective(d.provider)}
                   shape={shape}
-                  accountName={accounts.find((a) => a.provider === p)?.displayName}
+                  accountName={d.account.displayName}
                 />
               ))}
             </div>
@@ -512,11 +542,11 @@ export default function ComposeForm({ accounts }: { accounts: Account[] }) {
               Что куда уйдёт.
             </h2>
             <div className="review">
-              {providers.map((p) => {
-                const o = outcomeFor(p, shape);
+              {destinations.map((d) => {
+                const o = outcomeFor(d.provider, shape, d.variant);
                 return (
-                  <div className="review__row" key={p}>
-                    <span className="review__net">{PROVIDER_LABEL[p]}</span>
+                  <div className="review__row" key={d.account.id}>
+                    <span className="review__net">{PROVIDER_LABEL[d.provider]}</span>
                     <span className="review__what">{o.format}</span>
                     {o.note && (
                       <span className={`review__why ${o.tone === "error" ? "review__why--error" : ""}`}>

@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getEnv } from "@/lib/env";
-import { getProvider } from "@/lib/providers";
+import { getOAuthProvider } from "@/lib/providers";
 import { verifyOAuthState } from "@/lib/oauth-state";
 import { saveAccount } from "@/lib/accounts";
 
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
   if (!(await verifyOAuthState("instagram", state))) return back("error=bad_state");
 
   try {
-    const provider = getProvider("INSTAGRAM")!;
+    const provider = getOAuthProvider("INSTAGRAM")!;
     const result = await provider.handleCallback(code);
     await saveAccount(user.id, "INSTAGRAM", result);
     return back("connected=instagram");

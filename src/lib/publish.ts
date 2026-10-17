@@ -63,6 +63,8 @@ export async function publishTarget(targetId: string, attempt = 1): Promise<void
   try {
     // 1. Версия видео под требования сети (мастер не трогаем).
     let lastSaved = 0;
+    // У Telegram два вида назначения, и видео для них готовится по-разному.
+    const variant = typeof account.meta?.kind === "string" ? account.meta.kind : null;
     const rendition = await prepareRendition(
       target.post.mediaPath,
       target.post.mediaType,
@@ -71,7 +73,8 @@ export async function publishTarget(targetId: string, attempt = 1): Promise<void
         if (Date.now() - lastSaved < 2000) return;
         lastSaved = Date.now();
         void setTarget(targetId, { progress: pct }).catch(() => {});
-      }
+      },
+      variant
     );
     await setTarget(targetId, {
       stage: "upload",

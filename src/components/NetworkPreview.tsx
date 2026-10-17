@@ -15,19 +15,22 @@ import Icon from "./Icon";
  */
 export default function NetworkPreview({
   provider,
+  variant,
   videoUrl,
   caption,
   shape,
   accountName,
 }: {
   provider: Provider;
+  variant?: string | null;
   videoUrl: string | null;
   caption: string;
   shape: MediaShape | null;
   accountName?: string | null;
 }) {
+  // У истории Telegram кадр не перекрыт интерфейсом, в отличие от Reels.
   const chrome = CHROME[provider];
-  const outcome = outcomeFor(provider, shape);
+  const outcome = outcomeFor(provider, shape, variant);
   const { title, body } = previewCaption(provider, caption);
   const measure = measureFor(provider, provider === "YOUTUBE" ? caption : body || caption);
   const over = measure.used > measure.limit;

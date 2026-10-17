@@ -163,3 +163,49 @@ describe("Instagram", () => {
     assert.equal(plan.kind === "remux" && plan.audio.mode, "aac");
   });
 });
+
+describe("Telegram", () => {
+  it("история приводится ровно к 720×1280 в H.265", () => {
+    const { plan } = planRendition("TELEGRAM", media({ duration: 20 }), "story");
+    assert.equal(plan.kind, "encode");
+    if (plan.kind === "encode") {
+      assert.equal(plan.width, 720);
+      assert.equal(plan.height, 1280);
+      assert.equal(plan.codec, "hevc");
+      assert.equal(plan.gopSeconds, 1); // требование Telegram
+      assert.equal(plan.cropToFit, true); // без чёрных полей
+    }
+  });
+
+  it("история длиннее минуты не принимается", () => {
+    const r = planRendition("TELEGRAM", media({ duration: 61 }), "story");
+    assert.ok(r.errors.some((e) => /60 секунд/.test(e)));
+    assert.equal(planRendition("TELEGRAM", media({ duration: 59 }), "story").errors.length, 0);
+  });
+
+  it("история укладывается в 30 МБ по битрейту", () => {
+    const { plan } = planRendition("TELEGRAM", media({ duration: 60 }), "story");
+    // 30 МБ на 60 с — это примерно 4 Мбит/с, не больше.
+    if (plan.kind === "encode") assert.ok(plan.maxrateKbps! <= 4200, String(plan.maxrateKbps));
+  });
+
+  it("горизонтальный кадр для истории предупреждает об обрезке", () => {
+    const r = planRendition(
+      "TELEGRAM",
+      media({ duration: 10 }, { displayWidth: 1920, displayHeight: 1080 }),
+      "story"
+    );
+    assert.ok(r.warnings.some((w) => /обрезан/.test(w)));
+  });
+
+  it("подходящее видео в канал только перепаковывается", () => {
+    const { plan } = planRendition("TELEGRAM", media({ sizeBytes: 30 * 1024 * 1024 }));
+    assert.equal(plan.kind, "remux");
+  });
+
+  it("файл больше 50 МБ для канала сжимается", () => {
+    const { plan } = planRendition("TELEGRAM", media({ sizeBytes: 120 * 1024 * 1024, duration: 120 }));
+    assert.equal(plan.kind, "encode");
+    if (plan.kind === "encode") assert.match(plan.reason, /50 МБ/);
+  });
+});

@@ -89,5 +89,7 @@ export function configuredProviders() {
     instagram: Boolean(e.INSTAGRAM_APP_ID && e.INSTAGRAM_APP_SECRET),
     youtube: Boolean(e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET),
     tiktok: Boolean(e.TIKTOK_CLIENT_KEY && e.TIKTOK_CLIENT_SECRET),
+    // Telegram не требует ключей на сервере: токен бота вводит сам владелец.
+    telegram: true,
   };
 }

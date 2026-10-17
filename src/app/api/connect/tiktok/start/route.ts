@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getEnv, configuredProviders } from "@/lib/env";
-import { getProvider } from "@/lib/providers";
+import { getOAuthProvider } from "@/lib/providers";
 import { setOAuthState } from "@/lib/oauth-state";
 
 export async function GET() {
@@ -16,7 +16,7 @@ export async function GET() {
     );
   }
 
-  const provider = getProvider("TIKTOK")!;
+  const provider = getOAuthProvider("TIKTOK")!;
   const state = await setOAuthState("tiktok");
   return NextResponse.redirect(provider.getAuthUrl(state));
 }

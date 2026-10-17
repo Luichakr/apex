@@ -21,6 +21,7 @@ enum Provider {
   INSTAGRAM
   YOUTUBE
   TIKTOK
+  TELEGRAM
 }
 
 enum PostStatus {

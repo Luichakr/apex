@@ -30,9 +30,13 @@ const SHORTS_MAX_SEC = 180;
  * данным тега video, ещё до загрузки), и на сервере — поэтому на вход идут
  * только размеры и длительность.
  */
-export function outcomeFor(provider: Provider, m: MediaShape | null): Outcome {
+export function outcomeFor(
+  provider: Provider,
+  m: MediaShape | null,
+  variant?: string | null
+): Outcome {
   if (!m || !m.width || !m.height) {
-    return { format: FORMAT_NAME[provider], tone: "ok" };
+    return { format: variant === "story" ? "История" : FORMAT_NAME[provider], tone: "ok" };
   }
   const vertical = m.height >= m.width;
 
@@ -77,6 +81,17 @@ export function outcomeFor(provider: Provider, m: MediaShape | null): Outcome {
     return { format: "Видео", tone: "ok", note: "придёт во входящие приложения" };
   }
 
+  if (provider === "TELEGRAM") {
+    // Истории Telegram — ровно до минуты; у канала такого ограничения нет.
+    if (variant === "story") {
+      if (m.durationSec > 60) {
+        return { format: "История", tone: "error", note: "истории Telegram — не длиннее 60 секунд" };
+      }
+      return { format: "История", tone: "ok", note: "будет приведено к 720×1280" };
+    }
+    return { format: "Видео в канале", tone: "ok" };
+  }
+
   return { format: "Публикация на Странице", tone: "ok" };
 }
 
@@ -85,6 +100,7 @@ const FORMAT_NAME: Record<Provider, string> = {
   INSTAGRAM: "Reels",
   TIKTOK: "Видео",
   FACEBOOK: "Публикация",
+  TELEGRAM: "Видео",
 };
 
 /**
@@ -112,6 +128,8 @@ export const CHROME: Record<Provider, Chrome> = {
   // В Shorts заголовок и кнопки тоже поверх кадра.
   YOUTUBE: { bottom: 0.17, right: 0.15, top: 0.07, captionLines: 2, overlay: true },
   FACEBOOK: { bottom: 0, right: 0, top: 0, captionLines: 3, overlay: false },
+  // В Telegram подпись идёт под видео, кадр ничем не перекрыт.
+  TELEGRAM: { bottom: 0, right: 0, top: 0, captionLines: 3, overlay: false },
 };
 
 /** Фирменный цвет сети — только для точки-метки в превью, не для заливок. */
@@ -120,6 +138,7 @@ export const BRAND_DOT: Record<Provider, string> = {
   INSTAGRAM: "#e1306c",
   TIKTOK: "#00f2ea",
   FACEBOOK: "#0866ff",
+  TELEGRAM: "#2aabee",
 };
 
 /** Первая строка текста — заголовок для YouTube, для остальных подпись целиком. */

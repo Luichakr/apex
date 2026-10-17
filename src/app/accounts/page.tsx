@@ -5,13 +5,14 @@ import { getCurrentUser } from "@/lib/auth";
 import { configuredProviders } from "@/lib/env";
 import { prisma } from "@/lib/db";
 import Icon from "@/components/Icon";
+import TelegramConnect from "@/components/TelegramConnect";
 
 export const metadata: Metadata = { title: "Аккаунты" };
 export const dynamic = "force-dynamic";
 
 const NETWORKS: {
   provider: Provider;
-  key: "youtube" | "instagram" | "tiktok" | "meta";
+  key: "youtube" | "instagram" | "tiktok" | "meta" | "telegram";
   name: string;
   format: string;
   how: string;
@@ -36,6 +37,13 @@ const NETWORKS: {
     name: "TikTok",
     format: "Видео",
     how: "Видео приходит во входящие приложения TikTok — опубликуйте одним нажатием.",
+  },
+  {
+    provider: "TELEGRAM",
+    key: "telegram",
+    name: "Telegram",
+    format: "Канал и истории",
+    how: "Подключается токеном бота. Истории требуют Telegram Premium и права «Управление историями».",
   },
   {
     provider: "FACEBOOK",
@@ -86,8 +94,9 @@ export default async function AccountsPage({
         <div className="z-basic">
           <h1>Аккаунты.</h1>
           <p className="lead">
-            Подключение идёт на сайте самой сети — пароли от соцсетей сюда не вводятся.
-            Отключить можно в любой момент.
+            Пароли от соцсетей сюда не вводятся: YouTube, Instagram и TikTok
+            подключаются на их собственных сайтах, Telegram — токеном бота, который
+            вы заводите сами. Отключить можно в любой момент.
           </p>
         </div>
       </div>
@@ -158,7 +167,9 @@ export default async function AccountsPage({
                   )}
 
                   <div style={{ marginTop: "auto", paddingTop: 8 }}>
-                    {configured[n.key] ? (
+                    {n.provider === "TELEGRAM" ? (
+                      <TelegramConnect />
+                    ) : configured[n.key] ? (
                       <a
                         className={mine.length ? "btn btn--tool btn--block" : "btn btn--block"}
                         href={`/api/connect/${n.key}/start`}

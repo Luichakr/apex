@@ -172,6 +172,41 @@ export const SETTINGS: Record<Provider, SettingGroup[]> = {
   ],
 
   FACEBOOK: [],
+
+  TELEGRAM: [
+    {
+      id: "distribution",
+      title: "История",
+      fields: [
+        {
+          key: "storyHours",
+          type: "select",
+          label: "Сколько история висит",
+          default: "86400",
+          hint: "Telegram разрешает только эти четыре срока.",
+          options: [
+            { value: "21600", label: "6 часов" },
+            { value: "43200", label: "12 часов" },
+            { value: "86400", label: "Сутки" },
+            { value: "172800", label: "Двое суток" },
+          ],
+        },
+        {
+          key: "keepOnPage",
+          type: "toggle",
+          label: "Оставить в профиле после истечения",
+          default: true,
+        },
+      ],
+    },
+    {
+      id: "content",
+      title: "Канал",
+      fields: [
+        { key: "silent", type: "toggle", label: "Без звука уведомления", default: false },
+      ],
+    },
+  ],
 };
 
 export type SettingsValues = Record<string, string | boolean>;
