@@ -242,6 +242,12 @@ export const PLATFORM_SPECS = {
   TELEGRAM_CHANNEL: {
     maxBytes: 50 * 1024 * 1024,
   },
+  // LinkedIn: MP4, 3 c – 30 мин, до 500 МБ. Ориентацию не трогаем.
+  LINKEDIN: {
+    minDuration: 3,
+    maxDuration: 30 * 60,
+    maxBytes: 500 * 1024 * 1024,
+  },
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -332,6 +338,10 @@ export function planRendition(
     return variant === "story"
       ? planTelegramStory(info, v, warnings)
       : planTelegramChannel(info, v, warnings);
+  }
+
+  if (provider === "LINKEDIN") {
+    return planLinkedin(info, v, warnings);
   }
 
   if (provider === "YOUTUBE" || provider === "FACEBOOK") {
@@ -541,6 +551,66 @@ function planTelegramStory(
       codec: "hevc",
       gopSeconds: 1, // требование Telegram: ключевой кадр каждую секунду
       cropToFit: true,
+    },
+    warnings,
+    errors,
+  };
+}
+
+/** LinkedIn: нужен MP4/H.264 в пределах 500 МБ; ориентацию сохраняем. */
+function planLinkedin(
+  info: MediaInfo,
+  v: VideoStreamInfo,
+  warnings: string[]
+): PlanResult {
+  const s = PLATFORM_SPECS.LINKEDIN;
+  const errors: string[] = [];
+  if (info.duration && info.duration < s.minDuration) {
+    errors.push(`LinkedIn: видео ${fmtDur(info.duration)} — минимум 3 секунды`);
+  }
+  if (info.duration > s.maxDuration) {
+    errors.push(`LinkedIn: видео ${fmtDur(info.duration)} — максимум 30 минут`);
+  }
+  const fpsFix = clampFps(v.fps, 23, 60);
+  const fits = info.sizeBytes <= s.maxBytes * 0.95;
+  const compliant =
+    v.codec === "h264" && v.pixFmt === "yuv420p" && !v.hdr && !v.interlaced && fpsFix === null;
+
+  if (compliant && fits && isMp4Family(info)) {
+    return {
+      plan: {
+        kind: "remux",
+        reason: "файл уже подходит LinkedIn — перепаковка без перекодирования",
+        audio: info.audio ? { mode: "copy" } : { mode: "none" },
+        dropEditList: true,
+      },
+      warnings,
+      errors,
+    };
+  }
+
+  const dims = fitInside(v.displayWidth, v.displayHeight, { maxLong: 1920 });
+  const budgetKbps = info.duration
+    ? Math.floor((s.maxBytes * 8 * 0.9) / info.duration / 1000) - 128
+    : 12_000;
+  const reasons = [
+    v.codec !== "h264" && `${v.codec.toUpperCase()} → H.264`,
+    v.hdr && "HDR → SDR",
+    !fits && "файл больше 500 МБ",
+    fpsFix !== null && `${Math.round(v.fps)} fps → ${fpsFix}`,
+  ].filter(Boolean);
+  return {
+    plan: {
+      kind: "encode",
+      reason: `перекодирование под LinkedIn: ${reasons.join(", ") || "приведение к MP4/H.264"}`,
+      ...dims,
+      fps: fpsFix,
+      tonemap: v.hdr,
+      crf: 19,
+      preset: "medium",
+      maxrateKbps: Math.max(1500, Math.min(16_000, budgetKbps)),
+      audio: audioFor(info, { kbps: 128, rate: 48_000, maxChannels: 2, allowCopy: false }),
+      dropEditList: true,
     },
     warnings,
     errors,
@@ -868,6 +938,13 @@ export function verifyRendition(provider: Provider, out: MediaInfo): string[] {
     } else if (out.sizeBytes > PLATFORM_SPECS.TELEGRAM_CHANNEL.maxBytes) {
       issues.push(`размер ${(out.sizeBytes / 1048576).toFixed(0)} МБ > 50 МБ`);
     }
+  }
+
+  if (provider === "LINKEDIN") {
+    if (out.sizeBytes > PLATFORM_SPECS.LINKEDIN.maxBytes) {
+      issues.push(`размер ${(out.sizeBytes / 1048576).toFixed(0)} МБ > 500 МБ`);
+    }
+    if (!["h264", "hevc"].includes(v.codec)) issues.push(`кодек ${v.codec}`);
   }
 
   if (provider === "TIKTOK") {

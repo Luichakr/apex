@@ -61,7 +61,11 @@ export default function ComposeForm({ accounts }: { accounts: Account[] }) {
   const [meta, setMeta] = useState<VideoMeta | null>(null);
   const [over, setOver] = useState(false);
   const [caption, setCaption] = useState("");
-  const [selected, setSelected] = useState<string[]>(accounts.map((a) => a.id));
+  // LinkedIn — отдельный инструмент, не для каждого поста: по умолчанию его
+  // галочку не ставим, пользователь включает осознанно.
+  const [selected, setSelected] = useState<string[]>(
+    accounts.filter((a) => a.provider !== "LINKEDIN").map((a) => a.id)
+  );
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [coverMs, setCoverMs] = useState<number | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);

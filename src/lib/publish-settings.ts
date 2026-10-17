@@ -207,6 +207,25 @@ export const SETTINGS: Record<Provider, SettingGroup[]> = {
       ],
     },
   ],
+
+  LINKEDIN: [
+    {
+      id: "distribution",
+      title: "Кто увидит",
+      fields: [
+        {
+          key: "visibility",
+          type: "select",
+          label: "Видимость",
+          default: "PUBLIC",
+          options: [
+            { value: "PUBLIC", label: "Все (публично)" },
+            { value: "CONNECTIONS", label: "Только контакты" },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 export type SettingsValues = Record<string, string | boolean>;

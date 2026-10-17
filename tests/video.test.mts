@@ -209,3 +209,32 @@ describe("Telegram", () => {
     if (plan.kind === "encode") assert.match(plan.reason, /50 МБ/);
   });
 });
+
+describe("LinkedIn", () => {
+  it("подходящий MP4/H.264 только перепаковывается", () => {
+    const { plan } = planRendition("LINKEDIN", media({ sizeBytes: 50 * 1024 * 1024 }));
+    assert.equal(plan.kind, "remux");
+  });
+
+  it("HEVC переводит в H.264", () => {
+    const { plan } = planRendition("LINKEDIN", media({}, { codec: "hevc" }));
+    assert.equal(plan.kind, "encode");
+  });
+
+  it("файл больше 500 МБ сжимается", () => {
+    const { plan } = planRendition("LINKEDIN", media({ sizeBytes: 900 * 1024 * 1024, duration: 300 }));
+    assert.equal(plan.kind, "encode");
+    if (plan.kind === "encode") assert.match(plan.reason, /500 МБ/);
+  });
+
+  it("видео короче 3 секунд и длиннее 30 минут не принимается", () => {
+    assert.ok(planRendition("LINKEDIN", media({ duration: 2 })).errors.length > 0);
+    assert.ok(planRendition("LINKEDIN", media({ duration: 2000 })).errors.length > 0);
+  });
+
+  it("ориентация сохраняется — LinkedIn берёт и горизонталь, и вертикаль", () => {
+    const { plan } = planRendition("LINKEDIN", media({}, { codec: "hevc", displayWidth: 1920, displayHeight: 1080 }));
+    assert.equal(plan.kind, "encode");
+    if (plan.kind === "encode") assert.ok(plan.width >= plan.height); // осталось горизонтальным
+  });
+});

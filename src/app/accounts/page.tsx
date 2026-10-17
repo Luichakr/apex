@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 const NETWORKS: {
   provider: Provider;
-  key: "youtube" | "instagram" | "tiktok" | "meta" | "telegram";
+  key: "youtube" | "instagram" | "tiktok" | "meta" | "telegram" | "linkedin";
   name: string;
   format: string;
   how: string;
@@ -44,6 +44,13 @@ const NETWORKS: {
     name: "Telegram",
     format: "Канал и истории",
     how: "Подключается токеном бота. Истории требуют Telegram Premium и права «Управление историями».",
+  },
+  {
+    provider: "LINKEDIN",
+    key: "linkedin",
+    name: "LinkedIn",
+    format: "Видео в ленту",
+    how: "Публикуется в ваш профиль. Отдельный инструмент — в новый пост по умолчанию не добавляется.",
   },
   {
     provider: "FACEBOOK",

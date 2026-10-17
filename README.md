@@ -49,6 +49,7 @@
 | [Meta for Developers](https://developers.facebook.com) | приложение Instagram с входом через Instagram | публикация Reels |
 | [TikTok for Developers](https://developers.tiktok.com) | приложение + Content Posting API | загрузка во входящие TikTok |
 | Telegram | бот у [@BotFather](https://t.me/BotFather) | видео в канал и истории |
+| LinkedIn | приложение с продуктом «Share on LinkedIn» | видео в профиль |
 
 Пошагово — в папке [docs/](docs/). Площадки требуют адрес с HTTPS и ссылки на
 политику конфиденциальности и условия: обе страницы уже есть в приложении
@@ -99,6 +100,20 @@ TypeScript / Next.js + фоновый воркер (BullMQ) + PostgreSQL + Redis
 | Instagram | показывать Reels в ленте профиля |
 | TikTok | приватность, комментарии, дуэты, сшивки, метки «создано ИИ» и «коммерческое» — применятся при переходе на прямую публикацию |
 | Telegram | срок жизни истории (6 ч / 12 ч / сутки / двое суток), оставлять ли её в профиле, беззвучное уведомление в канал |
+
+## LinkedIn
+
+Отдельный инструмент: в новый пост LinkedIn **не добавляется по умолчанию**,
+галочку ставят вручную — он не для каждого ролика. Публикует видео в профиль
+автора; партнёрское одобрение не нужно, хватает self-serve продукта
+«Share on LinkedIn» (право `w_member_social`).
+
+Видео уходит в три шага Videos API (инициализация → заливка частей по 4 МБ →
+финализация), затем Posts API создаёт пост. Требования мягкие: MP4/H.264,
+3 секунды – 30 минут, до 500 МБ; ориентация любая. Текст — до 3000 символов.
+Нужно завести приложение в [LinkedIn Developers](https://www.linkedin.com/developers/),
+добавить продукт «Share on LinkedIn» и вписать ключи в `.env`
+(`LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`).
 
 ## Telegram
 

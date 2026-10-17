@@ -81,6 +81,16 @@ export function outcomeFor(
     return { format: "Видео", tone: "ok", note: "придёт во входящие приложения" };
   }
 
+  if (provider === "LINKEDIN") {
+    if (m.durationSec < 3) {
+      return { format: "Видео", tone: "error", note: "LinkedIn: видео короче 3 секунд не примет" };
+    }
+    if (m.durationSec > 30 * 60) {
+      return { format: "Видео", tone: "error", note: "LinkedIn: видео длиннее 30 минут не примет" };
+    }
+    return { format: "Видео", tone: "ok" };
+  }
+
   if (provider === "TELEGRAM") {
     // Истории Telegram — ровно до минуты; у канала такого ограничения нет.
     if (variant === "story") {
@@ -101,6 +111,7 @@ const FORMAT_NAME: Record<Provider, string> = {
   TIKTOK: "Видео",
   FACEBOOK: "Публикация",
   TELEGRAM: "Видео",
+  LINKEDIN: "Видео",
 };
 
 /**
@@ -130,6 +141,8 @@ export const CHROME: Record<Provider, Chrome> = {
   FACEBOOK: { bottom: 0, right: 0, top: 0, captionLines: 3, overlay: false },
   // В Telegram подпись идёт под видео, кадр ничем не перекрыт.
   TELEGRAM: { bottom: 0, right: 0, top: 0, captionLines: 3, overlay: false },
+  // В LinkedIn видео в ленте, подпись над ним — кадр не перекрыт.
+  LINKEDIN: { bottom: 0, right: 0, top: 0, captionLines: 3, overlay: false },
 };
 
 /** Фирменный цвет сети — только для точки-метки в превью, не для заливок. */
@@ -139,6 +152,7 @@ export const BRAND_DOT: Record<Provider, string> = {
   TIKTOK: "#00f2ea",
   FACEBOOK: "#0866ff",
   TELEGRAM: "#2aabee",
+  LINKEDIN: "#0a66c2",
 };
 
 /** Первая строка текста — заголовок для YouTube, для остальных подпись целиком. */

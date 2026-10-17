@@ -46,6 +46,10 @@ const schema = z.object({
   INSTAGRAM_APP_ID: z.string().optional().or(z.literal("")),
   INSTAGRAM_APP_SECRET: z.string().optional().or(z.literal("")),
 
+  // LinkedIn (self-serve продукт «Share on LinkedIn»)
+  LINKEDIN_CLIENT_ID: z.string().optional().or(z.literal("")),
+  LINKEDIN_CLIENT_SECRET: z.string().optional().or(z.literal("")),
+
   // Facebook-Страницы (требует бизнес-верификации Meta) — включается явно.
   META_ENABLE_FACEBOOK: z.string().optional(),
   // Печатать ссылки входа в лог, если SMTP не настроен (только для своего сервера).
@@ -91,5 +95,6 @@ export function configuredProviders() {
     tiktok: Boolean(e.TIKTOK_CLIENT_KEY && e.TIKTOK_CLIENT_SECRET),
     // Telegram не требует ключей на сервере: токен бота вводит сам владелец.
     telegram: true,
+    linkedin: Boolean(e.LINKEDIN_CLIENT_ID && e.LINKEDIN_CLIENT_SECRET),
   };
 }

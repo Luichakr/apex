@@ -6,6 +6,7 @@ import { facebookProvider } from "./meta";
 import { instagramProvider } from "./instagram";
 import { tiktokProvider } from "./tiktok";
 import { telegramProvider } from "./telegram";
+import { linkedinProvider } from "./linkedin";
 
 const registry: Partial<Record<Provider, SocialProvider>> = {
   YOUTUBE: youtubeProvider,
@@ -13,6 +14,7 @@ const registry: Partial<Record<Provider, SocialProvider>> = {
   INSTAGRAM: instagramProvider, // Instagram Login flow (src/lib/providers/instagram.ts)
   TIKTOK: tiktokProvider,
   TELEGRAM: telegramProvider, // подключается токеном бота, без OAuth
+  LINKEDIN: linkedinProvider,
 };
 
 export function getProvider(provider: Provider): SocialProvider | undefined {
