@@ -144,7 +144,13 @@ async function upload<T>(
 
 // --- Подключение (без OAuth) ------------------------------------------------
 
-export type TelegramBot = { id: number; username?: string; first_name?: string };
+export type TelegramBot = {
+  id: number;
+  username?: string;
+  first_name?: string;
+  /** Включён ли боту режим работы от имени пользователя (Secretary Mode). */
+  can_connect_to_business?: boolean;
+};
 
 /** Проверить токен и узнать, что это за бот. */
 export async function checkBotToken(token: string): Promise<TelegramBot> {

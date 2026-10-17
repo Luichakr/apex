@@ -63,6 +63,18 @@ export async function POST(req: Request) {
     }
 
     // Истории: бот должен быть подключён к бизнес-аккаунту с правом на истории.
+    // Два очень похожих симптома с разными причинами: либо боту не включён
+    // режим работы от имени пользователя, либо его просто не добавили в
+    // «Чат-боты». Телеграм отвечает на это прямо — не заставляем гадать.
+    if (bot.can_connect_to_business === false) {
+      return back(
+        "error=" +
+          encodeURIComponent(
+            `Боту ${botName} не включён режим работы от имени пользователя. В @BotFather: /mybots → ${botName} → Bot Settings → Mode Settings → включите «Secretary Mode». Затем добавьте бота в Настройки → Telegram для бизнеса → Чат-боты.`
+          )
+      );
+    }
+
     const connections = await findBusinessConnections(token);
     const chosen = businessConnectionId
       ? connections.find((c) => c.id === businessConnectionId)
@@ -71,7 +83,7 @@ export async function POST(req: Request) {
       return back(
         "error=" +
           encodeURIComponent(
-            "Бот не подключён к бизнес-аккаунту. В Telegram: Настройки → Telegram для бизнеса → Чат-боты → добавьте бота и включите «Управление историями», затем повторите."
+            `Режим у бота включён, но он ещё не добавлен к вашему аккаунту. На телефоне: Telegram → Настройки → Telegram для бизнеса → Чат-боты → впишите ${botName} → включите «Управление историями». Затем повторите здесь.`
           )
       );
     }

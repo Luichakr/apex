@@ -30,12 +30,15 @@ export async function publishTarget(targetId: string, attempt = 1): Promise<void
     throw new UnrecoverableError("Аккаунт соцсети отключён — публикация отменена");
   }
 
-  await setTarget(targetId, {
-    status: "PROCESSING",
-    attempts: { increment: 1 },
-    stage: "prepare",
-    progress: 0,
-  });
+  // Пост могли удалить, пока задача ждала очереди: тогда цели уже нет, и
+  // сообщать об этом надо понятно, а не ошибкой базы в журнале.
+  const started = await prisma.postTarget
+    .update({
+      where: { id: targetId },
+      data: { status: "PROCESSING", attempts: { increment: 1 }, stage: "prepare", progress: 0 },
+    })
+    .catch(() => null);
+  if (!started) throw new UnrecoverableError("Публикация удалена, пока ждала очереди");
   if (target.post.status === "SCHEDULED") {
     await prisma.post
       .update({ where: { id: target.postId }, data: { status: "PUBLISHING" } })
