@@ -25,6 +25,9 @@ pgdata/
 /public/google*.html
 /public/.well-known/
 
+# Кэш сборки TypeScript
+*.tsbuildinfo
+
 # Прочее
 .DS_Store
 *.log
