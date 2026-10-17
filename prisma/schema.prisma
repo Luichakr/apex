@@ -1,0 +1,189 @@
+// APEX — схема базы данных.
+// Доступы к соцсетям (токены) хранятся ТОЛЬКО в зашифрованном виде
+// (поля *Enc), шифрование — в src/lib/crypto.ts (AES-256-GCM).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  FRIEND
+}
+
+enum Provider {
+  FACEBOOK
+  INSTAGRAM
+  YOUTUBE
+  TIKTOK
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  DONE
+  PARTIAL // часть сетей опубликована, часть — с ошибкой
+  FAILED
+}
+
+enum TargetStatus {
+  QUEUED
+  PROCESSING
+  DONE
+  FAILED
+  SKIPPED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      Role     @default(FRIEND)
+  createdAt DateTime @default(now())
+  failureNotifiedAt DateTime? // когда в последний раз слали письмо о неудачах
+
+  accounts SocialAccount[]
+  posts    Post[]
+  sessions Session[]
+  invites  Invite[]        @relation("InviteCreatedBy")
+}
+
+// Одноразовая ссылка входа (magic-link). Храним только ХЭШ токена.
+model MagicToken {
+  id        String    @id @default(cuid())
+  email     String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  inviteCode String? // инвайт, с которым запрошена ссылка (тратится при входе)
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+}
+
+// Сессия после входа (ссылается на cookie). Храним только хэш.
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  userAgent  String?
+  ip         String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Инвайт-код для закрытого доступа друзей.
+model Invite {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  email       String? // можно привязать к конкретному email
+  createdById String
+  usedByEmail String?
+  usedAt      DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  createdBy User @relation("InviteCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+// Подключённый аккаунт соцсети конкретного пользователя.
+// accessTokenEnc / refreshTokenEnc — зашифрованы (AES-256-GCM, AAD = userId:provider).
+model SocialAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          Provider
+  providerAccountId String // id аккаунта/страницы/канала на стороне площадки
+  displayName       String?
+  accessTokenEnc    String
+  refreshTokenEnc   String?
+  tokenExpiresAt    DateTime?
+  scope             String?
+  meta              Json? // доп. данные: id страницы FB, id IG-бизнес-аккаунта, id канала и т.п.
+  needsReconnect    Boolean  @default(false) // доступ отозван: обновление токена не поможет
+  reconnectReason   String? // что именно ответила площадка
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targets PostTarget[]
+
+  @@unique([userId, provider, providerAccountId])
+  @@index([userId])
+}
+
+// Пост = одно видео + текст + набор целей (сетей).
+model Post {
+  id          String     @id @default(cuid())
+  userId      String
+  caption     String     @default("")
+  mediaPath   String // путь к мастер-файлу (оригинал, не изменяется)
+  mediaType   String // video/mp4 и т.п. (по содержимому файла)
+  mediaSize   BigInt?
+  mediaName   String? // исходное имя файла
+  mediaMeta   Json? // разбор ffprobe: разрешение, fps, HDR, длительность…
+  coverPath   String? // загруженная пользователем обложка (JPEG рядом с мастером)
+  mediaDeletedAt DateTime? // файлы удалены по сроку хранения
+  status      PostStatus @default(DRAFT)
+  scheduledAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targets PostTarget[]
+
+  @@index([userId])
+  @@index([status, scheduledAt])
+}
+
+// Публикация поста в одну конкретную сеть (одна задача воркера).
+model PostTarget {
+  id              String       @id @default(cuid())
+  postId          String
+  socialAccountId String?
+  provider        Provider
+  captionOverride String? // если для этой сети текст отличается
+  status          TargetStatus @default(QUEUED)
+  stage           String? // prepare | upload | processing — для прогресса в интерфейсе
+  progress        Int? // 0–100 для текущего этапа
+  renditionMeta   Json? // какая версия видео ушла в сеть (разрешение, битрейт…)
+  settings        Json? // настройки публикации для этой сети (приватность и т.п.)
+  coverMs         Int? // кадр-обложка: миллисекунда от начала (null — решает сеть)
+  remoteId        String? // id контейнера/загрузки у площадки — для безопасных повторов
+  isDraft         Boolean      @default(false) // TikTok: лежит во входящих приложения
+  externalId      String? // id опубликованного видео на площадке
+  externalUrl     String? // ссылка на опубликованное видео
+  error           String?
+  attempts        Int          @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  post    Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  account SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: SetNull)
+
+  @@index([postId])
+  @@index([status])
+}
+
+// Журнал действий (аудит безопасности).
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String // например: login, connect_account, disconnect_account, publish
+  detail    Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+}

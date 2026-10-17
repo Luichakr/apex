@@ -1,0 +1,34 @@
+# Секреты — НИКОГДА не коммитить
+.env
+.env.*
+!.env.example
+*.key
+secrets/
+
+# Зависимости и сборка
+node_modules/
+.next/
+dist/
+out/
+
+# Медиа-загрузки пользователей
+media/
+uploads/
+
+# Данные контейнеров (на случай bind-mount)
+data/
+pgdata/
+
+# Файлы подтверждения домена площадок — они привязаны к ВАШЕМУ кабинету
+# разработчика. У каждой установки свои, в общий репозиторий им не место.
+/public/tiktok*.txt
+/public/google*.html
+/public/.well-known/
+
+# Прочее
+.DS_Store
+*.log
+npm-debug.log*
+coverage/
+.vscode/
+.idea/

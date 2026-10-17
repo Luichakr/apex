@@ -1,0 +1,16 @@
+# Caddy выдаёт и продлевает HTTPS-сертификат автоматически.
+#
+# В .env задайте APP_DOMAIN=ваш-домен.ru (без http/https).
+# Для локального теста оставьте APP_DOMAIN=localhost — Caddy сделает
+# локальный самоподписанный сертификат.
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	# Загрузка видео может быть большой (до 4 ГБ) — поднимаем лимит тела запроса.
+	request_body {
+		max_size 5GB
+	}
+
+	reverse_proxy app:3000
+}

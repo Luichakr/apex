@@ -1,0 +1,48 @@
+{
+  "name": "apex",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Безопасный кросс-постинг видео в Instagram, Facebook, YouTube и TikTok",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "worker": "tsx src/worker/index.ts",
+    "worker:dev": "tsx watch src/worker/index.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "keygen": "tsx scripts/keygen.ts",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "doctor": "node --env-file=.env --import tsx scripts/doctor.mts",
+    "test": "node --import tsx --test tests/*.test.mts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.1.0",
+    "bullmq": "^5.34.0",
+    "busboy": "^1.6.0",
+    "googleapis": "^144.0.0",
+    "ioredis": "^5.4.2",
+    "jose": "^5.9.6",
+    "next": "^15.5.28",
+    "nodemailer": "^10.1.1",
+    "react": "^19.2.9",
+    "react-dom": "^19.2.9",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/busboy": "^1.5.4",
+    "@types/node": "^22.10.2",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "prisma": "^6.1.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
