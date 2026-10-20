@@ -1,5 +1,6 @@
 "use client";
 
+import Snippets, { type Snippet } from "./snippets";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Provider } from "@prisma/client";
@@ -54,7 +55,7 @@ function localNow() {
   return d.toISOString().slice(0, 16);
 }
 
-export default function ComposeForm({ accounts }: { accounts: Account[] }) {
+export default function ComposeForm({ accounts, snippets = [] }: { accounts: Account[]; snippets?: Snippet[] }) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState<string | null>(null);
@@ -377,6 +378,12 @@ export default function ComposeForm({ accounts }: { accounts: Account[] }) {
             rows={6}
             placeholder={"Первая строка — заголовок для YouTube\n\nОписание и #хештеги"}
             aria-invalid={textIssues.errors.length > 0}
+          />
+          <Snippets
+            initial={snippets}
+            caption={caption}
+            disabled={busy}
+            onInsert={(t) => setCaption((c) => (c.trim() ? `${c.replace(/\s+$/, "")}\n\n${t}` : t))}
           />
           {providers.length > 0 && (
             <div className="counter" aria-live="polite">

@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
   let userId: string;
   try {
-    userId = await ensureUser(record.email, record.inviteCode ?? undefined);
+    userId = await ensureUser(record.email, record.inviteCode ?? undefined, record.grantRole ?? undefined);
   } catch (e) {
     if (e instanceof InviteError) return redirectTo("/login?error=invite_used");
     throw e;

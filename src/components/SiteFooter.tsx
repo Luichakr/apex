@@ -24,6 +24,8 @@ export default async function SiteFooter() {
                 <li>YouTube Shorts</li>
                 <li>Instagram Reels</li>
                 <li>TikTok</li>
+                <li>Telegram</li>
+                <li>LinkedIn</li>
               </ul>
             </div>
             <div>
@@ -38,7 +40,7 @@ export default async function SiteFooter() {
           <p className="ftr__legal">
             Закрытый сервис для своих. Публикация идёт только через официальные API
             площадок, доступы к аккаунтам хранятся зашифрованными и отзываются при
-            отключении. YouTube, Instagram и TikTok — товарные знаки их владельцев;
+            отключении. YouTube, Instagram, TikTok, Telegram и LinkedIn — товарные знаки их владельцев;
             сервис с ними не аффилирован. · <Link href="/privacy">Конфиденциальность</Link>{" "}
             · <Link href="/terms">Условия</Link> · © {year}
           </p>

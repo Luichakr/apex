@@ -335,7 +335,7 @@ p { margin: 0; }
   background: var(--frosted-light); color: var(--primary);
 }
 .btn--icon:hover { background: rgba(100, 101, 114, 0.34); color: var(--primary); }
-.btn--block { width: 100%; }
+.btn--block { width: 100%; white-space: normal; height: auto; min-height: 56px; }
 .btn svg { width: 20px; height: 20px; flex: none; }
 @media (max-width: 759px) {
   .btn--stretch-sm { width: 100%; }
@@ -710,3 +710,26 @@ textarea.f { padding: 14px 16px; min-height: 140px; resize: vertical; line-heigh
 .setgroup { border: 0; padding: 0; margin: 0 0 var(--sp-sm); min-width: 0; }
 .setgroup__title { font-size: var(--fs-xs); color: var(--ink-medium); padding: 0; margin-bottom: 8px; }
 select.f { cursor: pointer; }
+
+/* Календарь публикаций */
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal__wd { font-size: var(--fs-xs); color: var(--ink-medium); padding: 4px 6px; }
+.cal__day {
+  min-height: 104px; padding: 6px; border-radius: var(--r-md);
+  background: var(--surface); display: flex; flex-direction: column; gap: 4px; min-width: 0;
+}
+.cal__day--empty { background: transparent; }
+.cal__day--today { outline: 2px solid var(--primary); outline-offset: -2px; }
+.cal__num { font-size: var(--fs-xs); color: var(--ink-medium); }
+.cal__post {
+  display: block; font-size: var(--fs-2xs); line-height: 1.3; padding: 3px 6px;
+  border-radius: var(--r-sm); color: var(--primary); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cal__legend { display: inline-flex; align-items: center; gap: 6px; margin-right: 14px; }
+.cal__legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+@media (max-width: 759px) {
+  .cal__day { min-height: 64px; padding: 4px; }
+  .cal__post { font-size: 0; padding: 0; height: 6px; }
+  .cal__post b { display: none; }
+}

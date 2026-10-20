@@ -49,7 +49,13 @@ export async function POST(req: Request) {
   const expiresAt = new Date(Date.now() + 15 * 60_000); // 15 минут
 
   await prisma.magicToken.create({
-    data: { email, tokenHash, expiresAt, inviteCode: access.willCreate ? inviteCode : null },
+    data: {
+      email,
+      tokenHash,
+      expiresAt,
+      inviteCode: access.willCreate ? inviteCode : null,
+      grantRole: access.willCreate ? access.role ?? null : null,
+    },
   });
 
   // Ссылка ведёт на страницу подтверждения: почтовые сканеры, открывающие

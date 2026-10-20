@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { Provider } from "@prisma/client";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, dataOwnerId } from "@/lib/auth";
 import { configuredProviders } from "@/lib/env";
 import { prisma } from "@/lib/db";
 import Icon from "@/components/Icon";
@@ -78,8 +78,10 @@ export default async function AccountsPage({
 
   const sp = await searchParams;
   const configured = configuredProviders();
+  const ownerId = await dataOwnerId(user);
+  const isViewer = user.role === "VIEWER";
   const accounts = await prisma.socialAccount.findMany({
-    where: { userId: user.id },
+    where: { userId: ownerId },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
@@ -100,6 +102,12 @@ export default async function AccountsPage({
       <div className="grid page-head">
         <div className="z-basic">
           <h1>Аккаунты.</h1>
+          {isViewer && (
+            <p className="lead" style={{ color: "var(--warn)" }}>
+              Вы вошли как наблюдатель: видите, что подключено, но подключать и
+              отключать сети нельзя.
+            </p>
+          )}
           <p className="lead">
             Пароли от соцсетей сюда не вводятся: YouTube, Instagram и TikTok
             подключаются на их собственных сайтах, Telegram — токеном бота, который
@@ -162,11 +170,13 @@ export default async function AccountsPage({
                                 </span>
                               )}
                             </span>
-                            <form action={`/api/accounts/${a.id}/disconnect`} method="post">
-                              <button className="btn btn--tool btn--sm" type="submit">
-                                Отключить
-                              </button>
-                            </form>
+                            {!isViewer && (
+                              <form action={`/api/accounts/${a.id}/disconnect`} method="post">
+                                <button className="btn btn--tool btn--sm" type="submit">
+                                  Отключить
+                                </button>
+                              </form>
+                            )}
                           </li>
                         );
                       })}
@@ -174,14 +184,14 @@ export default async function AccountsPage({
                   )}
 
                   <div style={{ marginTop: "auto", paddingTop: 8 }}>
-                    {n.provider === "TELEGRAM" ? (
+                    {isViewer ? null : n.provider === "TELEGRAM" ? (
                       <TelegramConnect />
                     ) : configured[n.key] ? (
                       <a
                         className={mine.length ? "btn btn--tool btn--block" : "btn btn--block"}
                         href={`/api/connect/${n.key}/start`}
                       >
-                        {mine.length ? "Подключить ещё / обновить доступ" : `Подключить ${n.name}`}
+                        {mine.length ? "Переподключить" : `Подключить ${n.name}`}
                       </a>
                     ) : (
                       <span className="meta">Ключи площадки не заданы на сервере.</span>

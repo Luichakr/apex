@@ -1,5 +1,6 @@
 /** Инвайт-коды для закрытого доступа (создаёт владелец). */
 import { randomBytes } from "node:crypto";
+import type { Role } from "@prisma/client";
 import { prisma } from "./db";
 
 // Алфавит без похожих символов (0/O, 1/I и т.п.) — код удобно диктовать.
@@ -14,7 +15,7 @@ function randomCode(len = 8): string {
 
 export async function createInvite(
   ownerId: string,
-  opts: { email?: string; expiresDays?: number } = {}
+  opts: { email?: string; expiresDays?: number; role?: Role } = {}
 ): Promise<string> {
   // Гарантируем уникальность кода.
   let code = randomCode();
@@ -34,6 +35,7 @@ export async function createInvite(
       code,
       email: opts.email?.trim().toLowerCase() || null,
       createdById: ownerId,
+      role: opts.role ?? "FRIEND",
       expiresAt,
     },
   });

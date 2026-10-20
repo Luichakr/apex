@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, dataOwnerId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import Icon from "@/components/Icon";
 import PostCard from "@/components/PostCard";
@@ -15,25 +15,34 @@ const RETRY_MSG: Record<string, { kind: "ok" | "error" | "info"; text: string }>
   no_account: { kind: "error", text: "Аккаунт этой сети отключён — подключите его заново." },
   no_media: { kind: "error", text: "Видео уже удалено по сроку хранения — создайте новый пост." },
   skip: { kind: "info", text: "Эта публикация уже не в статусе ошибки." },
+  viewer: { kind: "error", text: "Наблюдатель не может менять публикации." },
+};
+
+const DELETE_MSG: Record<string, { kind: "ok" | "error" | "info"; text: string }> = {
+  ok: { kind: "ok", text: "Пост убран из APEX. В самих сетях он остался — удалить его можно там." },
+  canceled: { kind: "ok", text: "Запланированная публикация отменена." },
+  busy: { kind: "error", text: "Видео сейчас загружается в сеть — удалить можно, когда загрузка закончится." },
+  missing: { kind: "info", text: "Этого поста уже нет." },
 };
 
 export default async function PostsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ retry?: string; created?: string }>;
+  searchParams: Promise<{ retry?: string; created?: string; deleted?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const sp = await searchParams;
 
+  const ownerId = await dataOwnerId(user);
   const posts = await prisma.post.findMany({
-    where: { userId: user.id },
+    where: { userId: ownerId },
     orderBy: { createdAt: "desc" },
     take: 50,
     include: { targets: { orderBy: { provider: "asc" } } },
   });
   const pending = posts.some((p) => p.status === "PUBLISHING");
-  const retry = sp.retry ? RETRY_MSG[sp.retry] : null;
+  const retry = sp.retry ? RETRY_MSG[sp.retry] : sp.deleted ? DELETE_MSG[sp.deleted] : null;
 
   return (
     <main>
@@ -44,9 +53,11 @@ export default async function PostsPage({
             <h1>Публикации.</h1>
             <p className="lead">Статус по каждой сети и что именно ушло в публикацию.</p>
           </div>
-          <Link href="/compose" className="btn btn--stretch-sm">
-            <Icon name="plus" /> Новый пост
-          </Link>
+          {user.role !== "VIEWER" && (
+            <Link href="/compose" className="btn btn--stretch-sm">
+              <Icon name="plus" /> Новый пост
+            </Link>
+          )}
         </div>
       </div>
       <div className="grid">
@@ -70,7 +81,7 @@ export default async function PostsPage({
               <div><Link className="btn" href="/compose">Создать пост</Link></div>
             </div>
           ) : (
-            posts.map((post) => <PostCard key={post.id} post={post} />)
+            posts.map((post) => <PostCard key={post.id} post={post} canEdit={user.role !== "VIEWER"} />)
           )}
         </div>
       </div>

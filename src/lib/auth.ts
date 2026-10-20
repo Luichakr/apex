@@ -98,3 +98,21 @@ export function clientIp(hdrs: Headers): string | undefined {
     undefined
   );
 }
+
+/**
+ * Чьи данные показывать пользователю. Наблюдатель (VIEWER) смотрит на аккаунты
+ * и публикации владельца — только для чтения; остальные видят свои.
+ */
+export async function dataOwnerId(user: CurrentUser): Promise<string> {
+  if (user.role !== "VIEWER") return user.id;
+  const owner = await prisma.user.findFirst({
+    where: { role: "OWNER" },
+    select: { id: true },
+  });
+  return owner?.id ?? user.id;
+}
+
+/** Может ли пользователь публиковать и менять подключения. */
+export function canPublish(user: CurrentUser): boolean {
+  return user.role === "OWNER" || user.role === "FRIEND";
+}

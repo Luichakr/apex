@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, canPublish } from "@/lib/auth";
 import HeaderNav from "./HeaderNav";
 import { Mark } from "./Icon";
 
@@ -10,6 +10,7 @@ export default async function SiteHeader() {
     ? [
         { href: "/dashboard", label: "Кабинет" },
         { href: "/posts", label: "Публикации" },
+        { href: "/calendar", label: "Календарь" },
         { href: "/accounts", label: "Аккаунты" },
         ...(user.role === "OWNER" ? [{ href: "/invites", label: "Приглашения" }] : []),
       ]
@@ -23,7 +24,7 @@ export default async function SiteHeader() {
             <Mark className="wordmark__mark" />
             APEX
           </Link>
-          <HeaderNav items={items} signedIn={Boolean(user)} />
+          <HeaderNav items={items} signedIn={Boolean(user)} canPublish={user ? canPublish(user) : true} />
         </div>
       </div>
     </header>

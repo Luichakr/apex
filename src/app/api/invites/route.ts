@@ -16,10 +16,12 @@ export async function POST(req: Request) {
   const email = form?.get("email") ? String(form.get("email")) : undefined;
   const expiresRaw = form?.get("expiresDays");
   const expiresDays = expiresRaw ? Number(expiresRaw) : undefined;
+  const role = form?.get("role") === "VIEWER" ? "VIEWER" : "FRIEND";
 
   await createInvite(user.id, {
     email,
     expiresDays: Number.isFinite(expiresDays) ? expiresDays : undefined,
+    role,
   });
 
   return NextResponse.redirect(new URL("/invites?created=1", env.APP_URL), {

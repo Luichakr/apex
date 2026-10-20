@@ -19,6 +19,7 @@ import {
   timingSafeEqual,
   createHash,
   createHmac,
+  scryptSync,
 } from "node:crypto";
 
 const VERSION = "v1";
@@ -138,4 +139,28 @@ export function randomToken(bytes = 32): string {
 /** Короткий отпечаток значения — для логов/аудита без раскрытия самого значения. */
 export function fingerprint(value: string): string {
   return createHash("sha256").update(value).digest("hex").slice(0, 12);
+}
+
+// --- Пароли -----------------------------------------------------------------
+// Вход по паролю — для self-hosted без настроенной почты. Храним scrypt-хэш
+// с солью: даже при утечке базы пароль не восстановить.
+/** Хэш пароля: scrypt, случайная соль. Формат: scrypt$<соль>$<хэш> (hex). */
+export function hashPassword(password: string): string {
+  const salt = randomBytes(16);
+  const hash = scryptSync(password.normalize("NFKC"), salt, 64);
+  return `scrypt$${salt.toString("hex")}$${hash.toString("hex")}`;
+}
+
+/** Проверка пароля в постоянное время. */
+export function verifyPassword(password: string, stored: string): boolean {
+  const parts = stored.split("$");
+  if (parts.length !== 3 || parts[0] !== "scrypt") return false;
+  try {
+    const salt = Buffer.from(parts[1], "hex");
+    const expected = Buffer.from(parts[2], "hex");
+    const actual = scryptSync(password.normalize("NFKC"), salt, expected.length);
+    return expected.length === actual.length && timingSafeEqual(expected, actual);
+  } catch {
+    return false;
+  }
 }

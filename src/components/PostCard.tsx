@@ -1,6 +1,7 @@
 import type { Post, PostTarget } from "@prisma/client";
 import Icon from "./Icon";
 import CopyButton from "./CopyButton";
+import ConfirmSubmit from "./ConfirmSubmit";
 import { PROVIDER_LABEL } from "@/lib/limits";
 import type { MediaInfo, RenditionMeta } from "@/lib/video";
 
@@ -61,7 +62,7 @@ function renditionLine(meta: unknown): string | null {
     .join(" · ");
 }
 
-function TargetStatus({ t, post }: { t: PostTarget; post: PostWithTargets }) {
+function TargetStatus({ t, post, canEdit }: { t: PostTarget; post: PostWithTargets; canEdit: boolean }) {
   const caption = t.captionOverride ?? post.caption;
   if (t.status === "DONE") {
     if (t.isDraft && t.provider === "TIKTOK") {
@@ -103,7 +104,7 @@ function TargetStatus({ t, post }: { t: PostTarget; post: PostWithTargets }) {
           <span className="target__name">{PROVIDER_LABEL[t.provider]}</span>
           <span className="row" style={{ gap: 10 }}>
             <span className="tag tag--error"><Icon name="alert" /> Ошибка</span>
-            {t.socialAccountId && !post.mediaDeletedAt && (
+            {canEdit && t.socialAccountId && !post.mediaDeletedAt && (
               <form action={`/api/targets/${t.id}/retry`} method="post">
                 <button type="submit" className="btn btn--tool btn--sm">
                   <Icon name="refresh" /> Повторить
@@ -153,7 +154,7 @@ function TargetStatus({ t, post }: { t: PostTarget; post: PostWithTargets }) {
   );
 }
 
-export default function PostCard({ post }: { post: PostWithTargets }) {
+export default function PostCard({ post, canEdit = true }: { post: PostWithTargets; canEdit?: boolean }) {
   const vertical =
     (post.mediaMeta as MediaInfo | null)?.video
       ? (post.mediaMeta as MediaInfo).video!.displayHeight >= (post.mediaMeta as MediaInfo).video!.displayWidth
@@ -179,14 +180,29 @@ export default function PostCard({ post }: { post: PostWithTargets }) {
       <div className="stack-sm" style={{ minWidth: 0 }}>
         <div className="between">
           <span className="meta">{fmtDate(post.createdAt)}</span>
-          {post.status === "PARTIAL" && <span className="tag tag--warn">Частично</span>}
+          <span className="row" style={{ gap: 10 }}>
+            {post.status === "PARTIAL" && <span className="tag tag--warn">Частично</span>}
+            {canEdit && !post.targets.some((t) => t.status === "PROCESSING") && (
+              <form action={`/api/posts/${post.id}/delete`} method="post">
+                {post.status === "SCHEDULED" ? (
+                  <ConfirmSubmit className="btn btn--tool btn--sm" question="Отменить запланированную публикацию? Видео будет удалено из APEX.">
+                    Отменить
+                  </ConfirmSubmit>
+                ) : (
+                  <ConfirmSubmit className="btn btn--tool btn--sm" question="Убрать пост из APEX? Уже опубликованное в сетях останется — удалять его нужно в самих приложениях.">
+                    Удалить
+                  </ConfirmSubmit>
+                )}
+              </form>
+            )}
+          </span>
         </div>
         <p className="post__caption">{post.caption || <span className="muted">Без текста</span>}</p>
         {src && <p className="meta">Исходник: {src}</p>}
         <ul className="rows" style={{ marginTop: 8 }}>
           {post.targets.map((t) => (
             <li key={t.id}>
-              <TargetStatus t={t} post={post} />
+              <TargetStatus t={t} post={post} canEdit={canEdit} />
               {renditionLine(t.renditionMeta) && (
                 <p className="target__detail" style={{ marginTop: 6 }}>
                   Ушло в сеть: {renditionLine(t.renditionMeta)}

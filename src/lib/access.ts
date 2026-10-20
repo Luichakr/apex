@@ -5,11 +5,12 @@
  *   - Уже существующий пользователь — можно.
  *   - Новый email — только при действующем инвайт-коде.
  */
+import type { Role } from "@prisma/client";
 import { prisma } from "./db";
 import { getEnv } from "./env";
 
 export type AccessCheck =
-  | { ok: true; willCreate: boolean }
+  | { ok: true; willCreate: boolean; role?: Role }
   | { ok: false; reason: string };
 
 export async function checkAccess(
@@ -41,7 +42,7 @@ export async function checkAccess(
   if (invite.email && invite.email.toLowerCase() !== normalized)
     return { ok: false, reason: "Инвайт-код выдан для другого email" };
 
-  return { ok: true, willCreate: true };
+  return { ok: true, willCreate: true, role: invite.role };
 }
 
 async function userExists(email: string): Promise<boolean> {
@@ -57,7 +58,8 @@ export class InviteError extends Error {}
  */
 export async function ensureUser(
   email: string,
-  inviteCode?: string
+  inviteCode?: string,
+  grantRole?: Role
 ): Promise<string> {
   const env = getEnv();
   const normalized = email.trim().toLowerCase();
@@ -71,6 +73,7 @@ export async function ensureUser(
   if (!isOwner && !inviteCode) throw new InviteError("Нужен инвайт-код");
 
   const user = await prisma.$transaction(async (tx) => {
+    let role: Role = isOwner ? "OWNER" : grantRole ?? "FRIEND";
     if (!isOwner) {
       const now = new Date();
       const spent = await tx.invite.updateMany({
@@ -83,9 +86,12 @@ export async function ensureUser(
         data: { usedAt: now, usedByEmail: normalized },
       });
       if (spent.count !== 1) throw new InviteError("Инвайт-код уже использован или истёк");
+      // Роль берём из самого инвайта — источник правды в БД, не из параметра.
+      const inv = await tx.invite.findUnique({ where: { code: inviteCode!.trim() } });
+      role = inv?.role ?? role;
     }
     return tx.user.create({
-      data: { email: normalized, role: isOwner ? "OWNER" : "FRIEND" },
+      data: { email: normalized, role },
     });
   });
 

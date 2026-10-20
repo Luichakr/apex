@@ -14,6 +14,7 @@ datasource db {
 enum Role {
   OWNER
   FRIEND
+  VIEWER // наблюдатель: видит подключённое и посты, но не публикует и не меняет
 }
 
 enum Provider {
@@ -47,6 +48,7 @@ model User {
   email     String   @unique
   name      String?
   role      Role     @default(FRIEND)
+  passwordHash String? // scrypt-хэш пароля (вход без почты); null — только по ссылке
   createdAt DateTime @default(now())
   failureNotifiedAt DateTime? // когда в последний раз слали письмо о неудачах
 
@@ -54,6 +56,7 @@ model User {
   posts    Post[]
   sessions Session[]
   invites  Invite[]        @relation("InviteCreatedBy")
+  snippets CaptionSnippet[]
 }
 
 // Одноразовая ссылка входа (magic-link). Храним только ХЭШ токена.
@@ -64,6 +67,7 @@ model MagicToken {
   expiresAt DateTime
   usedAt    DateTime?
   inviteCode String? // инвайт, с которым запрошена ссылка (тратится при входе)
+  grantRole  Role?   // роль, которую выдаст этот вход (из инвайта)
   createdAt DateTime  @default(now())
 
   @@index([email])
@@ -94,6 +98,7 @@ model Invite {
   usedByEmail String?
   usedAt      DateTime?
   expiresAt   DateTime?
+  role        Role      @default(FRIEND) // какую роль получит вошедший по этому коду
   createdAt   DateTime  @default(now())
 
   createdBy User @relation("InviteCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
@@ -188,4 +193,17 @@ model AuditLog {
 
   @@index([userId])
   @@index([action])
+}
+
+// Сохранённый фрагмент текста: подпись, набор хештегов, призыв к действию.
+model CaptionSnippet {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  text      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

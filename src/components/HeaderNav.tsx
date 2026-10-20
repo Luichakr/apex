@@ -12,9 +12,11 @@ type NavItem = { href: string; label: string };
 export default function HeaderNav({
   items,
   signedIn,
+  canPublish = true,
 }: {
   items: NavItem[];
   signedIn: boolean;
+  canPublish?: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -57,9 +59,11 @@ export default function HeaderNav({
       )}
       <div className="hdr__actions">
         {signedIn ? (
-          <Link href="/compose" className="btn btn--sm hide-sm">
-            <Icon name="plus" /> Новый пост
-          </Link>
+          canPublish ? (
+            <Link href="/compose" className="btn btn--sm hide-sm">
+              <Icon name="plus" /> Новый пост
+            </Link>
+          ) : null
         ) : (
           <Link href="/login" className="btn btn--sm hide-sm">
             Войти
@@ -103,7 +107,7 @@ export default function HeaderNav({
         </div>
         <ul className="drawer__list">
           {(signedIn
-            ? [{ href: "/compose", label: "Новый пост" }, ...items]
+            ? [...(canPublish ? [{ href: "/compose", label: "Новый пост" }] : []), ...items]
             : [{ href: "/", label: "Главная" }, { href: "/login", label: "Войти" }]
           ).map((i) => (
             <li key={i.href}>

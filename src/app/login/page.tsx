@@ -23,7 +23,7 @@ export default async function LoginPage({
       <div className="z-narrow" style={{ maxWidth: 520 }}>
         <h1>Вход.</h1>
         <p className="lead" style={{ marginTop: "var(--sp-sm)" }}>
-          Пароль не нужен: пришлём на почту одноразовую ссылку.
+          Войдите по паролю или получите одноразовую ссылку на почту.
         </p>
         <LoginForm initialError={sp.error ? ERRORS[sp.error] ?? null : null} />
       </div>

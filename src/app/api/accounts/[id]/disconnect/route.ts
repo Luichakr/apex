@@ -11,6 +11,7 @@ export async function POST(
   const env = getEnv();
   const user = await getCurrentUser();
   if (!user) return NextResponse.redirect(new URL("/login", env.APP_URL));
+  if (user.role === "VIEWER") return NextResponse.redirect(new URL("/accounts?error=viewer", env.APP_URL), 303);
 
   const { id } = await params;
   await disconnectAccount(id, user.id);

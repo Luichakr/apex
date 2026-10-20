@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, canPublish } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import Icon from "@/components/Icon";
 import ComposeForm from "./compose-form";
@@ -12,11 +12,17 @@ export const dynamic = "force-dynamic";
 export default async function ComposePage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  if (!canPublish(user)) redirect("/posts");
 
   const accounts = await prisma.socialAccount.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "asc" },
     select: { id: true, provider: true, displayName: true, meta: true },
+  });
+  const snippets = await prisma.captionSnippet.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, title: true, text: true },
   });
 
   return (
@@ -38,7 +44,7 @@ export default async function ComposePage() {
               </div>
             </div>
           ) : (
-            <ComposeForm accounts={accounts} />
+            <ComposeForm accounts={accounts} snippets={snippets} />
           )}
         </div>
       </div>

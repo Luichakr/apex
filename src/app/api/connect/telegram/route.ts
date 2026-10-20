@@ -28,6 +28,7 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   const back = (q: string) => NextResponse.redirect(new URL(`/accounts?${q}`, env.APP_URL), 303);
   if (!user) return NextResponse.redirect(new URL("/login", env.APP_URL), 303);
+  if (user.role === "VIEWER") return back("error=" + encodeURIComponent("Ваша роль — наблюдатель: подключение недоступно"));
 
   // Токен проверяется обращением к Telegram — не даём перебирать.
   if (!(await rateLimit(`tg-connect:${user.id}`, 20, 10 * 60))) {

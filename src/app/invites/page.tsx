@@ -62,6 +62,17 @@ export default async function InvitesPage({
                   <input id="inv-days" className="f" type="number" name="expiresDays" min={1} max={365} placeholder="Например, 14" inputMode="numeric" />
                   <span className="field__hint">Без срока код действует, пока его не используют.</span>
                 </div>
+                <div className="field">
+                  <label className="field__label" htmlFor="inv-role">Права</label>
+                  <select id="inv-role" className="f" name="role" defaultValue="FRIEND">
+                    <option value="FRIEND">Участник — может публиковать</option>
+                    <option value="VIEWER">Наблюдатель — только смотрит, без публикации</option>
+                  </select>
+                  <span className="field__hint">
+                    Наблюдатель видит подключённые сети и публикации, но не может
+                    публиковать и менять подключения.
+                  </span>
+                </div>
               </div>
               <div><button className="btn btn--stretch-sm" type="submit">Создать код</button></div>
             </form>
@@ -82,7 +93,9 @@ export default async function InvitesPage({
                       <div style={{ minWidth: 0 }}>
                         <code style={{ fontSize: "1rem" }}>{inv.code}</code>
                         <p className="meta" style={{ marginTop: 6 }}>
-                          {inv.email ? `Для ${inv.email}` : "Для любого адреса"}
+                          {inv.role === "VIEWER" ? "Наблюдатель" : "Участник"}
+                          {" · "}
+                          {inv.email ? `для ${inv.email}` : "для любого адреса"}
                           {inv.expiresAt && !used ? ` · до ${inv.expiresAt.toLocaleDateString("ru-RU")}` : ""}
                         </p>
                       </div>

@@ -14,6 +14,12 @@ export const maxDuration = 3600;
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+  if (user.role === "VIEWER") {
+    return NextResponse.json(
+      { error: "Ваша роль — наблюдатель: публикация недоступна" },
+      { status: 403 }
+    );
+  }
 
   let upload;
   try {

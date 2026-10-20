@@ -12,6 +12,7 @@ export async function POST(
   const env = getEnv();
   const user = await getCurrentUser();
   if (!user) return NextResponse.redirect(new URL("/login", env.APP_URL), 303);
+  if (user.role === "VIEWER") return NextResponse.redirect(new URL("/posts?retry=viewer", env.APP_URL), 303);
   const { id } = await params;
 
   const target = await prisma.postTarget.findFirst({
