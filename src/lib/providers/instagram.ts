@@ -16,6 +16,7 @@ import type {
 } from "./types";
 import { getEnv } from "../env";
 import { publicMediaUrl } from "../media";
+import { parseCollaborators } from "../publish-settings";
 import { updateStoredTokens } from "../accounts";
 import { metaError, metaUsagePercent, parseRetryAfter, PlatformError } from "./errors";
 
@@ -172,6 +173,8 @@ export const instagramProvider: SocialProvider = {
       }
     }
 
+    const collaborators = parseCollaborators(input.settings?.collaborators).names;
+
     // 1. Контейнер REELS из публичного URL подготовленной версии видео.
     if (!creationId) {
       const createRes = await fetch(`${GRAPH}/${API_V}/${igUserId}/media`, {
@@ -182,6 +185,8 @@ export const instagramProvider: SocialProvider = {
           video_url: publicMediaUrl(input.filePath),
           caption: input.caption ?? "",
           share_to_feed: input.settings?.shareToFeed !== false,
+          // Соавторы получают приглашение; пост выходит и без их согласия.
+          ...(collaborators.length ? { collaborators } : {}),
           // Загруженную картинку Instagram забирает по ссылке, выбранный
           // кадр — по смещению от начала ролика. Картинка главнее.
           ...(input.coverImagePath

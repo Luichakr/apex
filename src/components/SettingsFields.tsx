@@ -4,6 +4,8 @@ import type { Provider } from "@prisma/client";
 import {
   SETTINGS,
   fieldVisible,
+  parseCollaborators,
+  MAX_COLLABORATORS,
   type SettingField,
   type SettingsValues,
 } from "@/lib/publish-settings";
@@ -13,6 +15,17 @@ import {
  * Добавить площадке поле — значит дописать строку в таблицу, а не верстать
  * ещё одну форму.
  */
+function collabWarning(raw: unknown) {
+  const { invalid } = parseCollaborators(raw);
+  const total = typeof raw === "string" ? raw.split(/[\s,;]+/).filter(Boolean).length : 0;
+  const msg = invalid.length
+    ? `Не похоже на имя в Instagram: ${invalid.join(", ")} — эти не отправим.`
+    : total > MAX_COLLABORATORS
+      ? `Instagram принимает до ${MAX_COLLABORATORS} соавторов — лишних не отправим.`
+      : null;
+  return msg ? <span className="target__error">{msg}</span> : null;
+}
+
 export default function SettingsFields({
   provider,
   values,
@@ -58,6 +71,29 @@ export default function SettingsFields({
               {f.hint && <span className="choice__sub" style={{ display: "block" }}>{f.hint}</span>}
             </span>
           </label>
+        </div>
+      );
+    }
+
+    if (f.type === "text") {
+      return (
+        <div key={f.key} className="field">
+          <label className="field__label" htmlFor={id}>{f.label}</label>
+          <input
+            id={id}
+            className="f"
+            type="text"
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            maxLength={300}
+            placeholder={f.placeholder}
+            value={String(values[f.key] ?? "")}
+            disabled={disabled}
+            onChange={(e) => onChange(f.key, e.target.value)}
+          />
+          {f.key === "collaborators" && collabWarning(values[f.key])}
+          {f.hint && <span className="field__hint">{f.hint}</span>}
         </div>
       );
     }

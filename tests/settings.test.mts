@@ -9,9 +9,27 @@ import {
   defaultSettings,
   fieldVisible,
   hasSettings,
+  parseCollaborators,
   resolveSettings,
 } from "../src/lib/publish-settings.ts";
 import { candidateTimestamps, clampCoverMs, formatTimecode } from "../src/lib/cover.ts";
+
+describe("Соавторы Instagram", () => {
+  it("чистит @, регистр, повторы и разделители", () => {
+    assert.deepEqual(parseCollaborators("@Anna, bob.k  @anna;c_d").names, ["anna", "bob.k", "c_d"]);
+  });
+  it("не больше трёх", () => {
+    assert.equal(parseCollaborators("a b c d").names.length, 3);
+  });
+  it("отбрасывает невозможные имена", () => {
+    const r = parseCollaborators("@норм, ok");
+    assert.deepEqual(r.names, ["ok"]);
+    assert.deepEqual(r.invalid, ["@норм"]);
+  });
+  it("текстовое поле сохраняется как есть", () => {
+    assert.equal(resolveSettings("INSTAGRAM", { collaborators: " @a " }).collaborators, "@a");
+  });
+});
 
 describe("Настройки публикации", () => {
   it("YouTube по умолчанию публикуется сразу всем", () => {

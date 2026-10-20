@@ -10,7 +10,7 @@
  */
 import type { Provider } from "@prisma/client";
 
-export type FieldType = "select" | "toggle";
+export type FieldType = "select" | "toggle" | "text";
 
 export type SettingField = {
   key: string;
@@ -31,6 +31,8 @@ export type SettingField = {
   optionsFrom?: "tiktokPrivacy";
   /** Площадка принимает это поле только при прямой публикации. */
   inboxIgnores?: boolean;
+  /** Подсказка внутри текстового поля. */
+  placeholder?: string;
 };
 
 export type SettingGroup = {
@@ -113,6 +115,20 @@ export const SETTINGS: Record<Provider, SettingGroup[]> = {
           label: "Показывать Reels в ленте профиля",
           default: true,
           hint: "Выключено — ролик будет только во вкладке Reels.",
+        },
+      ],
+    },
+    {
+      id: "content",
+      title: "Соавторы",
+      fields: [
+        {
+          key: "collaborators",
+          type: "text",
+          label: "Соавторы (до 3)",
+          default: "",
+          placeholder: "@username, @username",
+          hint: "Им придёт приглашение. Если примут — ролик появится и в их профилях. Аккаунты должны быть публичными. Просто отметить человека можно через @ в тексте.",
         },
       ],
     },
@@ -263,6 +279,10 @@ export function resolveSettings(provider: Provider, stored: unknown): SettingsVa
         continue;
       }
       if (typeof v !== "string") continue;
+      if (f.type === "text") {
+        out[f.key] = v.trim().slice(0, 300);
+        continue;
+      }
       // Значение вне списка вариантов тоже не берём.
       const allowed = (f.options ?? []).map((o) => o.value);
       if (allowed.length === 0 || allowed.includes(v)) out[f.key] = v;
@@ -274,4 +294,23 @@ export function resolveSettings(provider: Provider, stored: unknown): SettingsVa
 /** Есть ли у сети что настраивать. */
 export function hasSettings(provider: Provider): boolean {
   return SETTINGS[provider].some((g) => g.fields.length > 0);
+}
+
+export const MAX_COLLABORATORS = 3;
+
+/**
+ * «@anna, bob.k  @anna» → ["anna", "bob.k"]. Имена Instagram — латиница,
+ * цифры, точка и подчёркивание, до 30 символов; остальное отбрасываем.
+ */
+export function parseCollaborators(raw: unknown): { names: string[]; invalid: string[] } {
+  if (typeof raw !== "string") return { names: [], invalid: [] };
+  const names: string[] = [];
+  const invalid: string[] = [];
+  for (const part of raw.split(/[\s,;]+/)) {
+    const n = part.replace(/^@+/, "").trim().toLowerCase();
+    if (!n) continue;
+    if (!/^[a-z0-9._]{1,30}$/.test(n)) invalid.push(part);
+    else if (!names.includes(n)) names.push(n);
+  }
+  return { names: names.slice(0, MAX_COLLABORATORS), invalid };
 }
