@@ -11,6 +11,8 @@ import { google } from "googleapis";
 import type {
   ConnectResult,
   DecryptedAccount,
+  FetchedMetrics,
+  MetricsTarget,
   PublishInput,
   PublishResult,
   SocialProvider,
@@ -178,6 +180,35 @@ export const youtubeProvider: SocialProvider = {
   async revoke(account: DecryptedAccount): Promise<void> {
     const client = oauthClient();
     await client.revokeToken(account.accessToken).catch(() => {});
+  },
+
+  async fetchMetrics(
+    account: DecryptedAccount,
+    target: MetricsTarget
+  ): Promise<FetchedMetrics | null> {
+    // videos.list со statistics отдаёт просмотры, лайки и комментарии разом.
+    // Расходует всего 1 единицу квоты — для сбора метрик это удобно.
+    const url = new URL("https://www.googleapis.com/youtube/v3/videos");
+    url.searchParams.set("part", "statistics");
+    url.searchParams.set("id", target.externalId);
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${account.accessToken}` },
+      cache: "no-store",
+    });
+    if (!res.ok) throw await youtubeFail(res);
+    const json = (await res.json()) as {
+      items?: { statistics?: Record<string, string> }[];
+    };
+    const s = json.items?.[0]?.statistics;
+    if (!s) return null;
+    const num = (v: string | undefined) =>
+      v === undefined ? undefined : Number.parseInt(v, 10);
+    return {
+      views: num(s.viewCount),
+      likes: num(s.likeCount),
+      comments: num(s.commentCount),
+      raw: s,
+    };
   },
 };
 

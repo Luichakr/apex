@@ -17,6 +17,8 @@ import { open, stat } from "node:fs/promises";
 import { basename } from "node:path";
 import type {
   DecryptedAccount,
+  FetchedMetrics,
+  MetricsTarget,
   PublishInput,
   PublishResult,
   SocialProvider,
@@ -277,5 +279,12 @@ export const telegramProvider: SocialProvider = {
       ? `https://t.me/${msg.chat.username}/${msg.message_id}`
       : undefined;
     return { externalId: String(msg.message_id), externalUrl: url };
+  },
+
+  async fetchMetrics(): Promise<FetchedMetrics | null> {
+    // Bot API не отдаёт ни охваты канала, ни реакции по сообщению. Эти данные
+    // доступны только MTProto-клиентам, который мы здесь не разворачиваем.
+    // Возвращаем null — интерфейс покажет «метрики для Telegram недоступны».
+    return null;
   },
 };

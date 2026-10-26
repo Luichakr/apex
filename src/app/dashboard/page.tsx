@@ -34,7 +34,12 @@ export default async function DashboardPage({
       where: { userId: ownerId },
       orderBy: { createdAt: "desc" },
       take: 3,
-      include: { targets: { orderBy: { provider: "asc" } } },
+      include: {
+        targets: {
+          orderBy: { provider: "asc" },
+          include: { metrics: { orderBy: { fetchedAt: "desc" }, take: 1 } },
+        },
+      },
     }),
     workerHealth(),
   ]);

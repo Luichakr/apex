@@ -64,6 +64,29 @@ export type PublishResult = {
   note?: string;
 };
 
+/**
+ * Текущие показатели публикации, снятые у площадки.
+ * Поля необязательные: у разных сетей разный набор, и часть площадок
+ * (например, LinkedIn для личного профиля) охваты не отдаёт.
+ */
+export type FetchedMetrics = {
+  views?: number;
+  reach?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  saves?: number;
+  /** Сырой ответ площадки — на случай добавления новых показателей. */
+  raw?: unknown;
+};
+
+/** Данные публикации, которые нужно показать коннектору для сбора метрик. */
+export type MetricsTarget = {
+  externalId: string;
+  settings?: Record<string, unknown> | null;
+  renditionMeta?: Record<string, unknown> | null;
+};
+
 export interface SocialProvider {
   id: Provider;
   /**
@@ -79,4 +102,13 @@ export interface SocialProvider {
   ensureFreshToken?(account: DecryptedAccount): Promise<DecryptedAccount>;
   /** Отозвать доступ на стороне площадки (при отключении аккаунта). */
   revoke?(account: DecryptedAccount): Promise<void>;
+  /**
+   * Снять текущие показатели публикации у площадки.
+   * null — площадка не отдаёт метрики для такой публикации (например, TikTok
+   * до аудита, Telegram для чата а не канала, LinkedIn для личного профиля).
+   */
+  fetchMetrics?(
+    account: DecryptedAccount,
+    target: MetricsTarget
+  ): Promise<FetchedMetrics | null>;
 }

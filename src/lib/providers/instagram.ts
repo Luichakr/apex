@@ -10,6 +10,8 @@
 import type {
   ConnectResult,
   DecryptedAccount,
+  FetchedMetrics,
+  MetricsTarget,
   PublishInput,
   PublishResult,
   SocialProvider,
@@ -241,6 +243,35 @@ export const instagramProvider: SocialProvider = {
       /* необязательно */
     }
     return { externalId: mediaId, externalUrl: url };
+  },
+
+  async fetchMetrics(
+    account: DecryptedAccount,
+    target: MetricsTarget
+  ): Promise<FetchedMetrics | null> {
+    // Insights для Reels: reach, likes, comments, shares, saved, views (c 2024).
+    const metrics = ["reach", "likes", "comments", "shares", "saved", "views"];
+    const url = new URL(`${GRAPH}/${API_V}/${target.externalId}/insights`);
+    url.searchParams.set("metric", metrics.join(","));
+    url.searchParams.set("access_token", account.accessToken);
+    const res = await fetch(url, { cache: "no-store" });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || json.error) throw graphError("Instagram insights", res, json.error);
+    const by = new Map<string, number>();
+    for (const row of (json.data ?? []) as { name?: string; values?: { value?: number }[] }[]) {
+      if (row.name && typeof row.values?.[0]?.value === "number") {
+        by.set(row.name, row.values[0].value);
+      }
+    }
+    return {
+      views: by.get("views"),
+      reach: by.get("reach"),
+      likes: by.get("likes"),
+      comments: by.get("comments"),
+      shares: by.get("shares"),
+      saves: by.get("saved"),
+      raw: json.data,
+    };
   },
 };
 

@@ -1,11 +1,12 @@
-import type { Post, PostTarget } from "@prisma/client";
+import type { Post, PostMetric, PostTarget } from "@prisma/client";
 import Icon from "./Icon";
 import CopyButton from "./CopyButton";
 import ConfirmSubmit from "./ConfirmSubmit";
 import { PROVIDER_LABEL } from "@/lib/limits";
 import type { MediaInfo, RenditionMeta } from "@/lib/video";
 
-type PostWithTargets = Post & { targets: PostTarget[] };
+type TargetWithMetrics = PostTarget & { metrics?: PostMetric[] };
+type PostWithTargets = Post & { targets: TargetWithMetrics[] };
 
 const fmtDate = (d: Date) =>
   new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(d);
@@ -62,7 +63,62 @@ function renditionLine(meta: unknown): string | null {
     .join(" · ");
 }
 
-function TargetStatus({ t, post, canEdit }: { t: PostTarget; post: PostWithTargets; canEdit: boolean }) {
+/** Короткое представление большого числа: 12_345 → «12.3k». */
+function fmtNum(n: number): string {
+  if (n < 1000) return String(n);
+  if (n < 10_000) return `${(n / 1000).toFixed(1)}k`.replace(".0k", "k");
+  if (n < 1_000_000) return `${Math.round(n / 1000)}k`;
+  return `${(n / 1_000_000).toFixed(1)}M`.replace(".0M", "M");
+}
+
+/** «15 мин назад», «2 ч назад», «вчера» — для подписи «обновлено …». */
+function fmtRelative(d: Date): string {
+  const diff = Date.now() - d.getTime();
+  const m = Math.round(diff / 60_000);
+  if (m < 1) return "только что";
+  if (m < 60) return `${m} мин назад`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} ч назад`;
+  const days = Math.round(h / 24);
+  if (days === 1) return "вчера";
+  if (days < 7) return `${days} дн назад`;
+  return fmtDate(d);
+}
+
+/** Строка со свежими охватами публикации. */
+function MetricsLine({ t }: { t: TargetWithMetrics }) {
+  if (t.status !== "DONE" || t.isDraft) return null;
+  const last = t.metrics?.[0];
+  // Telegram и TikTok метрики не отдают — честно говорим об этом.
+  if (!last) {
+    if (t.provider === "TELEGRAM" || t.provider === "TIKTOK") {
+      return <p className="target__detail" style={{ marginTop: 4 }}>Охваты для этой сети недоступны по API.</p>;
+    }
+    if (t.metricsError) {
+      return <p className="target__detail" style={{ marginTop: 4 }}>Охваты пока не получены: {t.metricsError}</p>;
+    }
+    return <p className="target__detail" style={{ marginTop: 4 }}>Охваты появятся после ближайшего опроса (раз в 6 ч).</p>;
+  }
+  const parts: string[] = [];
+  const headline = last.views ?? last.reach;
+  if (headline !== null && headline !== undefined) {
+    parts.push(`${last.reach !== null && last.reach !== undefined ? "охват" : "просмотры"} ${fmtNum(headline)}`);
+  }
+  if (last.likes !== null && last.likes !== undefined) parts.push(`❤ ${fmtNum(last.likes)}`);
+  if (last.comments !== null && last.comments !== undefined) parts.push(`💬 ${fmtNum(last.comments)}`);
+  if (last.shares !== null && last.shares !== undefined) parts.push(`↗ ${fmtNum(last.shares)}`);
+  if (last.saves !== null && last.saves !== undefined) parts.push(`🔖 ${fmtNum(last.saves)}`);
+  if (parts.length === 0) {
+    return <p className="target__detail" style={{ marginTop: 4 }}>Площадка ещё не отдала показатели.</p>;
+  }
+  return (
+    <p className="target__detail" style={{ marginTop: 4 }}>
+      {parts.join(" · ")} <span className="muted">· обновлено {fmtRelative(last.fetchedAt)}</span>
+    </p>
+  );
+}
+
+function TargetStatus({ t, post, canEdit }: { t: TargetWithMetrics; post: PostWithTargets; canEdit: boolean }) {
   const caption = t.captionOverride ?? post.caption;
   if (t.status === "DONE") {
     if (t.isDraft && t.provider === "TIKTOK") {
@@ -208,6 +264,7 @@ export default function PostCard({ post, canEdit = true }: { post: PostWithTarge
                   Ушло в сеть: {renditionLine(t.renditionMeta)}
                 </p>
               )}
+              <MetricsLine t={t} />
             </li>
           ))}
         </ul>

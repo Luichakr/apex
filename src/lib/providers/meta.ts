@@ -14,6 +14,8 @@ import type { Provider } from "@prisma/client";
 import type {
   ConnectResult,
   DecryptedAccount,
+  FetchedMetrics,
+  MetricsTarget,
   PublishInput,
   PublishResult,
   SocialProvider,
@@ -182,6 +184,57 @@ export const facebookProvider: SocialProvider = {
       /* ссылка необязательна */
     }
     return { externalId: id, externalUrl: url };
+  },
+
+  async fetchMetrics(
+    account: DecryptedAccount,
+    target: MetricsTarget
+  ): Promise<FetchedMetrics | null> {
+    // Page video insights: показы, уникальный охват, суммарное время просмотра.
+    // Реакции/комментарии/репосты лежат отдельно — summary=total_count.
+    const token = account.accessToken;
+    const insights = await graphGet(`${target.externalId}/video_insights`, {
+      metric: "total_video_impressions,total_video_impressions_unique,total_video_views",
+      access_token: token,
+    }).catch(() => null);
+    const by = new Map<string, number>();
+    if (insights) {
+      for (const row of (insights.data ?? []) as {
+        name?: string;
+        values?: { value?: number }[];
+      }[]) {
+        if (row.name && typeof row.values?.[0]?.value === "number") {
+          by.set(row.name, row.values[0].value);
+        }
+      }
+    }
+    const engagement = await graphGet(target.externalId, {
+      fields:
+        "likes.summary(true).limit(0),comments.summary(true).limit(0),shares,reactions.summary(true).limit(0)",
+      access_token: token,
+    }).catch(() => null as unknown as Record<string, unknown> | null);
+    const likes =
+      (engagement?.reactions as { summary?: { total_count?: number } } | undefined)?.summary?.total_count ??
+      (engagement?.likes as { summary?: { total_count?: number } } | undefined)?.summary?.total_count;
+    const comments = (engagement?.comments as { summary?: { total_count?: number } } | undefined)
+      ?.summary?.total_count;
+    const shares = (engagement?.shares as { count?: number } | undefined)?.count;
+    if (
+      !by.size &&
+      likes === undefined &&
+      comments === undefined &&
+      shares === undefined
+    ) {
+      return null;
+    }
+    return {
+      views: by.get("total_video_views") ?? by.get("total_video_impressions"),
+      reach: by.get("total_video_impressions_unique"),
+      likes,
+      comments,
+      shares,
+      raw: { insights: insights?.data, engagement },
+    };
   },
 };
 

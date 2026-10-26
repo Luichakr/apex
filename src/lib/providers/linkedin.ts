@@ -18,6 +18,8 @@ import { open, stat } from "node:fs/promises";
 import type {
   ConnectResult,
   DecryptedAccount,
+  FetchedMetrics,
+  MetricsTarget,
   PublishInput,
   PublishResult,
   SocialProvider,
@@ -191,6 +193,36 @@ export const linkedinProvider: SocialProvider = {
       externalUrl: activity
         ? `https://www.linkedin.com/feed/update/${postUrn}`
         : undefined,
+    };
+  },
+
+  async fetchMetrics(
+    account: DecryptedAccount,
+    target: MetricsTarget
+  ): Promise<FetchedMetrics | null> {
+    // Для личного профиля охват LinkedIn не отдаёт — только счётчики реакций.
+    // socialActions возвращает их по URN поста разом.
+    const token = account.accessToken;
+    const urn = encodeURIComponent(target.externalId);
+    const res = await fetch(`${API}/rest/socialActions/${urn}`, {
+      headers: liHeaders(token),
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      // 404 бывает в первые минуты после публикации — считаем «ещё нет данных».
+      if (res.status === 404) return null;
+      throw httpError("LinkedIn insights", res.status, liMessage(await res.text().catch(() => "")));
+    }
+    const json = (await res.json().catch(() => ({}))) as {
+      likesSummary?: { totalLikes?: number };
+      commentsSummary?: { aggregatedTotalComments?: number; totalFirstLevelComments?: number };
+    };
+    return {
+      likes: json.likesSummary?.totalLikes,
+      comments:
+        json.commentsSummary?.aggregatedTotalComments ??
+        json.commentsSummary?.totalFirstLevelComments,
+      raw: json,
     };
   },
 };

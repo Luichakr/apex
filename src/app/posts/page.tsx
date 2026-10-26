@@ -39,7 +39,12 @@ export default async function PostsPage({
     where: { userId: ownerId },
     orderBy: { createdAt: "desc" },
     take: 50,
-    include: { targets: { orderBy: { provider: "asc" } } },
+    include: {
+      targets: {
+        orderBy: { provider: "asc" },
+        include: { metrics: { orderBy: { fetchedAt: "desc" }, take: 1 } },
+      },
+    },
   });
   const pending = posts.some((p) => p.status === "PUBLISHING");
   const retry = sp.retry ? RETRY_MSG[sp.retry] : sp.deleted ? DELETE_MSG[sp.deleted] : null;

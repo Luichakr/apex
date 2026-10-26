@@ -172,14 +172,37 @@ model PostTarget {
   externalUrl     String? // ссылка на опубликованное видео
   error           String?
   attempts        Int          @default(0)
+  metricsCheckedAt DateTime? // когда последний раз спрашивали охваты у площадки
+  metricsError    String? // чем ответила площадка в последний неуспешный раз
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
   post    Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
   account SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: SetNull)
+  metrics PostMetric[]
 
   @@index([postId])
   @@index([status])
+  @@index([status, metricsCheckedAt])
+}
+
+// Замер охватов публикации (накапливаем историю, чтобы видеть рост).
+// Храним по одной строке на каждый опрос площадки — так получается график.
+model PostMetric {
+  id          String   @id @default(cuid())
+  targetId    String
+  fetchedAt   DateTime @default(now())
+  views       Int? // показы или просмотры (YouTube: viewCount)
+  reach       Int? // охват (уникальные пользователи, у кого Meta и Facebook это даёт)
+  likes       Int?
+  comments    Int?
+  shares      Int?
+  saves       Int? // Instagram «сохранения»
+  raw         Json? // полный ответ площадки — на случай добавления новых показателей
+
+  target PostTarget @relation(fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@index([targetId, fetchedAt])
 }
 
 // Журнал действий (аудит безопасности).

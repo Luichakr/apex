@@ -15,6 +15,7 @@ import { publishTarget, recordFailure } from "../lib/publish";
 import { removeMediaFamily } from "../lib/media";
 import { sendFailureDigests } from "../lib/notify";
 import { sweepStuckTargets } from "../lib/publish";
+import { collectMetricsOnce, METRICS_INTERVAL_MS } from "../lib/metrics";
 
 console.log(
   `[worker] запуск обработчика очереди публикаций…${
@@ -88,12 +89,30 @@ const notifyTimer = setInterval(
   30 * 60_000
 );
 
+// Сбор охватов: раз в METRICS_INTERVAL_MS обходим опубликованные посты.
+// Первый проход — через минуту после старта, чтобы не нагружать запуск.
+async function collectMetricsSafe(): Promise<void> {
+  try {
+    const r = await collectMetricsOnce();
+    if (r.checked) {
+      console.log(
+        `[worker] метрики: проверено ${r.checked}, обновлено ${r.saved}, ошибок ${r.errors}`
+      );
+    }
+  } catch (e) {
+    console.error("[worker] сбор метрик упал:", e instanceof Error ? e.message : e);
+  }
+}
+const metricsTimer = setInterval(() => void collectMetricsSafe(), METRICS_INTERVAL_MS);
+setTimeout(() => void collectMetricsSafe(), 60_000);
+
 async function shutdown() {
   console.log("[worker] остановка…");
   clearInterval(sweepTimer);
   clearInterval(beatTimer);
   clearInterval(notifyTimer);
   clearInterval(stuckTimer);
+  clearInterval(metricsTimer);
   await worker.close();
   await prisma.$disconnect();
   process.exit(0);
