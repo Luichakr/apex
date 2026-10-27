@@ -22,9 +22,9 @@ export default async function SiteHeader() {
     <header className="hdr">
       <div className="grid hdr__in">
         <div className="z-wide hdr__bar">
-          <Link href={user ? "/dashboard" : "/"} className="wordmark" aria-label="APEX — на главную">
+          <Link href={user ? "/dashboard" : "/"} className="wordmark" aria-label="APX — на главную">
             <Mark className="wordmark__mark" />
-            APEX
+            APX
           </Link>
           <HeaderNav items={items} signedIn={Boolean(user)} canPublish={user ? canPublish(user) : true} />
         </div>

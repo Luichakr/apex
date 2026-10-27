@@ -44,7 +44,7 @@ export default async function SiteFooter() {
             сервис с ними не аффилирован. · <Link href="/privacy">Конфиденциальность</Link>{" "}
             · <Link href="/terms">Условия</Link> · © {year}
           </p>
-          <div className="ftr__mark" aria-hidden>APEX</div>
+          <div className="ftr__mark" aria-hidden>APX</div>
         </div>
       </div>
     </footer>

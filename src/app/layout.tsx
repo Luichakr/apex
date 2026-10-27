@@ -7,7 +7,7 @@ import AccountAlert from "@/components/AccountAlert";
 import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
-  title: { default: "APEX", template: "%s — APEX" },
+  title: { default: "APX", template: "%s — APX" },
   description:
     "Одно видео — сразу в YouTube Shorts, Instagram Reels и TikTok. Без потери качества, через официальные API.",
 };

@@ -241,11 +241,11 @@ export default function PostCard({ post, canEdit = true }: { post: PostWithTarge
             {canEdit && !post.targets.some((t) => t.status === "PROCESSING") && (
               <form action={`/api/posts/${post.id}/delete`} method="post">
                 {post.status === "SCHEDULED" ? (
-                  <ConfirmSubmit className="btn btn--tool btn--sm" question="Отменить запланированную публикацию? Видео будет удалено из APEX.">
+                  <ConfirmSubmit className="btn btn--tool btn--sm" question="Отменить запланированную публикацию? Видео будет удалено из APX.">
                     Отменить
                   </ConfirmSubmit>
                 ) : (
-                  <ConfirmSubmit className="btn btn--tool btn--sm" question="Убрать пост из APEX? Уже опубликованное в сетях останется — удалять его нужно в самих приложениях.">
+                  <ConfirmSubmit className="btn btn--tool btn--sm" question="Убрать пост из APX? Уже опубликованное в сетях останется — удалять его нужно в самих приложениях.">
                     Удалить
                   </ConfirmSubmit>
                 )}

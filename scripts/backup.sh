@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Резервная копия APEX. Запуск:  bash scripts/backup.sh
+# Резервная копия APX. Запуск:  bash scripts/backup.sh
 #
 # Сохраняет в папку backups/:
 #   - дамп базы данных (пользователи, зашифрованные токены, посты);

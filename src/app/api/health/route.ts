@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export function GET() {
   return Response.json(
-    { ok: true, app: "APEX", time: new Date().toISOString() },
+    { ok: true, app: "APX", time: new Date().toISOString() },
     { headers: { "Cache-Control": "no-store" } }
   );
 }

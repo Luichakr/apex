@@ -5,7 +5,7 @@
 ## Шаги
 
 1. Откройте **https://console.cloud.google.com/** и войдите аккаунтом Google.
-2. Вверху создайте новый проект (**Select a project → New Project**), назовите «APEX».
+2. Вверху создайте новый проект (**Select a project → New Project**), назовите «APX».
 3. Включите API: **APIs & Services → Library** → найдите **YouTube Data API v3** → **Enable**.
 4. Настройте экран согласия: **APIs & Services → OAuth consent screen**:
    - User type: **External**.

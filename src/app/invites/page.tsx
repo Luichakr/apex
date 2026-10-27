@@ -104,7 +104,7 @@ export default async function InvitesPage({
                           {used ? `Использован${inv.usedByEmail ? ` · ${inv.usedByEmail}` : ""}` : expired ? "Просрочен" : "Активен"}
                         </span>
                         {!used && !expired && (
-                          <CopyButton text={`Код приглашения в APEX: ${inv.code}\nВход: ${loginUrl}`} label="Скопировать" />
+                          <CopyButton text={`Код приглашения в APX: ${inv.code}\nВход: ${loginUrl}`} label="Скопировать" />
                         )}
                         {!used && (
                           <form action={`/api/invites/${inv.id}/delete`} method="post">

@@ -10,7 +10,7 @@ import { publishQueue } from "../src/lib/redis";
 async function main() {
   const file = resolve(process.argv[2] || "media/test-tiktok.mp4");
   const caption =
-    process.argv[3] || "Тестовая загрузка из APEX (черновик TikTok)";
+    process.argv[3] || "Тестовая загрузка из APX (черновик TikTok)";
   const size = statSync(file).size;
   const ext = file.toLowerCase().split(".").pop();
   const mediaType =

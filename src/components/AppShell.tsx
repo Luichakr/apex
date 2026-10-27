@@ -34,9 +34,9 @@ export default function AppShell({ user, children }: { user: CurrentUser; childr
   return (
     <div className="app">
       <aside className="sb">
-        <Link href="/dashboard" className="wordmark sb__brand" aria-label="APEX — обзор">
+        <Link href="/dashboard" className="wordmark sb__brand" aria-label="APX — обзор">
           <Mark className="wordmark__mark" />
-          APEX
+          APX
         </Link>
         {publish && (
           <Link href="/compose" className="btn sb__new">
@@ -54,9 +54,9 @@ export default function AppShell({ user, children }: { user: CurrentUser; childr
 
       <div className="app__main">
         <header className="topbar">
-          <Link href="/dashboard" className="wordmark" aria-label="APEX — обзор">
+          <Link href="/dashboard" className="wordmark" aria-label="APX — обзор">
             <Mark className="wordmark__mark" />
-            APEX
+            APX
           </Link>
           <HeaderNav items={flat} signedIn canPublish={publish} />
         </header>

@@ -9,7 +9,7 @@ import { tiktokProvider } from "../src/lib/providers/tiktok";
 
 async function main() {
   const file = resolve(process.argv[2] || "media/ig-test.mp4");
-  const caption = process.argv[3] || "Тест APEX → TikTok";
+  const caption = process.argv[3] || "Тест APX → TikTok";
 
   const acc = await prisma.socialAccount.findFirst({ where: { provider: "TIKTOK" } });
   if (!acc) throw new Error("Нет подключённого TikTok");

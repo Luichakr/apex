@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Обновление APEX до новой версии кода. Запуск:  bash scripts/update.sh
+# Обновление APX до новой версии кода. Запуск:  bash scripts/update.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

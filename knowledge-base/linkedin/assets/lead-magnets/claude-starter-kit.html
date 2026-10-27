@@ -1,0 +1,162 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Claude Code Starter Kit</title>
+<style>
+@page{size:A4;margin:0}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;color:#1d2a22;font-size:11.5pt;line-height:1.5}
+.page{width:210mm;height:297mm;padding:22mm 20mm;page-break-after:always;position:relative}
+.page:last-child{page-break-after:auto}
+.cover{background:#0f3d2a;color:#fff;display:flex;flex-direction:column;justify-content:space-between}
+.cover h1{font-size:40pt;line-height:1.05;margin:0 0 8mm}
+.cover .tag{color:#7be3a6;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:10pt}
+.cover p{font-size:14pt;max-width:140mm;opacity:.9}
+h2{font-size:20pt;color:#0f3d2a;margin:0 0 4mm}
+h3{font-size:12.5pt;margin:6mm 0 2mm;color:#0f3d2a}
+.num{color:#2bb673;font-weight:800}
+.lead{font-size:12.5pt;color:#44564b;margin:0 0 6mm}
+pre{background:#f1f6f3;border-left:3px solid #2bb673;padding:4mm 5mm;font-size:9.5pt;line-height:1.45;white-space:pre-wrap;margin:2mm 0 4mm;font-family:Menlo,monospace}
+.box{background:#f1f6f3;border-radius:3mm;padding:4mm 5mm;margin:3mm 0}
+ul{padding-left:5mm;margin:2mm 0}li{margin:1mm 0}
+.foot{position:absolute;bottom:12mm;left:20mm;right:20mm;font-size:8.5pt;color:#7a8a80;display:flex;justify-content:space-between}
+.check li{list-style:none;margin-left:-5mm}.check li:before{content:"☐  ";color:#2bb673}
+</style></head><body>
+
+<section class="page cover">
+<div class="tag">Free starter kit</div>
+<div>
+<h1>Ship software<br>without a dev team.</h1>
+<p>The exact files, rules and prompts I give Claude Code before every project — the setup behind a car-import CRM, a cross-posting tool and two AI assistants built in 60 days.</p>
+</div>
+<p style="font-size:11pt">Sergey Lee-chan · Automotive Department Lead, ECOFACTOR<br>EV + AI · Ukraine → Poland</p>
+</section>
+
+<section class="page">
+<h2>How to use this kit</h2>
+<p class="lead">Claude forgets everything between sessions. Everything below exists to fix that one problem — give it memory, rules and a clear goal, and it behaves like a senior teammate instead of a clever stranger.</p>
+<h3><span class="num">1.</span> The 5-minute setup</h3>
+<ul>
+<li>Install Claude Code (desktop app or terminal).</li>
+<li>Create one folder per project.</li>
+<li>Put a <b>CLAUDE.md</b> file in it (template on page 3).</li>
+<li>Create a <b>docs/</b> folder for briefs and decisions (page 4).</li>
+<li>Start every session with the kickoff prompt (page 5).</li>
+</ul>
+<h3><span class="num">2.</span> What's inside</h3>
+<ul>
+<li>p.3 — CLAUDE.md template: the project's "constitution"</li>
+<li>p.4 — Folder structure that gives AI long-term memory</li>
+<li>p.5 — 10 prompts I use on every project</li>
+<li>p.6 — Safety rules and the pre-launch checklist</li>
+</ul>
+<div class="box"><b>One rule above all:</b> you own the problem, AI owns the typing. Never ask it to "build an app". Ask it to solve one painful thing for one real person.</div>
+<div class="foot"><span>Claude Code Starter Kit</span><span>2</span></div>
+</section>
+
+<section class="page">
+<h2>CLAUDE.md template</h2>
+<p class="lead">Claude reads this file automatically at the start of every session. Keep it under one page.</p>
+<pre># Project: [name]
+
+## Who it's for
+[One person, one situation. E.g. "Sales manager who
+handles 40 car-import leads a week in spreadsheets."]
+
+## The problem
+[What hurts, how often, what it costs in hours or money.]
+
+## What "done" looks like
+- [User can do X in under Y minutes]
+- [No manual copy-paste between A and B]
+
+## Rules
+- Language of the UI: [English / Polish / Ukrainian]
+- Keep it simple: no new libraries without asking me.
+- Never store passwords or API keys in code — use .env.
+- Before deleting or overwriting anything, show me first.
+- After each change, tell me how to test it in one sentence.
+
+## Decisions log
+See docs/decisions.md — read it before proposing changes.
+
+## Current status
+[What works, what's next. Update at end of each session.]</pre>
+<div class="foot"><span>Claude Code Starter Kit</span><span>3</span></div>
+</section>
+
+<section class="page">
+<h2>Give AI a memory</h2>
+<p class="lead">This folder structure is how my projects survive between sessions — and how a new teammate (human or AI) gets up to speed in 30 seconds.</p>
+<pre>my-project/
+├── CLAUDE.md          ← rules + status (auto-read)
+├── docs/
+│   ├── brief.md       ← who, what, why
+│   ├── decisions.md   ← "we chose X because Y" (dated)
+│   ├── questions.md   ← open questions for the owner
+│   └── work-log.md    ← what was done each session
+├── .env.example       ← names of secrets, never values
+└── src/               ← the code (AI writes, you test)</pre>
+<h3>decisions.md — example entry</h3>
+<pre>## 2026-10-12 — Payments
+Cash on delivery only for launch. Online payment
+after 50 orders. Why: avoids 2 weeks of provider review.</pre>
+<div class="box"><b>Why it matters:</b> without a decisions log, AI will happily "improve" things you already decided against. With it, every session starts where the last one ended.</div>
+<div class="foot"><span>Claude Code Starter Kit</span><span>4</span></div>
+</section>
+
+<section class="page">
+<h2>10 prompts I use on every project</h2>
+<pre><b>1. Kickoff</b>
+Read CLAUDE.md and docs/. Summarize the goal in 3 lines
+and list what you'd do first. Don't write code yet.
+
+<b>2. Ugly version first</b>
+Build the smallest version that solves [problem] for
+[person]. One screen. No design polish.
+
+<b>3. Explain like I'm the owner</b>
+Explain what you just built without technical words.
+What can break, and how would I notice?
+
+<b>4. Test plan</b>
+Give me a 5-step checklist to test this by hand.
+
+<b>5. Second opinion</b>
+Review your own change as a strict senior engineer.
+List bugs and security risks, most serious first.
+
+<b>6. Stuck</b>
+We've tried this twice. Stop. List 3 different
+approaches with pros and cons, then recommend one.
+
+<b>7. Decision record</b>
+Add today's decision to docs/decisions.md with the why.
+
+<b>8. Handover</b>
+Update CLAUDE.md status and work-log.md so a new
+session can continue tomorrow without me.
+
+<b>9. Cost check</b>
+What will this cost per month to run? Cheaper options?
+
+<b>10. Kill switch</b>
+What should NOT be automated here and why?</pre>
+<div class="foot"><span>Claude Code Starter Kit</span><span>5</span></div>
+</section>
+
+<section class="page">
+<h2>Safety rules &amp; launch checklist</h2>
+<p class="lead">AI makes building cheap. It doesn't make mistakes cheap. These are the lines I don't cross alone.</p>
+<h3>Bring in a professional when you touch</h3>
+<ul><li>Payments and money flows</li><li>Personal data of customers (GDPR)</li><li>Logins, passwords, access to company accounts</li><li>Anything that can delete data in bulk</li></ul>
+<h3>Before you give it to real users</h3>
+<ul class="check">
+<li>A colleague tested it without your help</li>
+<li>Secrets live in .env, not in the code</li>
+<li>There's a backup and you've restored it once</li>
+<li>Prompt #5 (second opinion) found nothing serious</li>
+<li>You know who fixes it if it breaks on a Sunday</li>
+<li>You measured the "before": hours or money it costs today</li>
+</ul>
+<div class="box" style="margin-top:8mm"><b>Found this useful?</b> I share what I build with AI — costs, failures and prompts — plus EV reality from Ukraine and Poland. Follow me on LinkedIn: <b>Sergey Lee-chan</b>. Reply to my DM and tell me what you're building — I read every one.</div>
+<div class="foot"><span>Claude Code Starter Kit</span><span>6</span></div>
+</section>
+</body></html>

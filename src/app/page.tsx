@@ -17,7 +17,7 @@ export default async function HomePage() {
             Одно видео — во все ваши сети. Без потери качества.
           </h1>
           <p className="lead hero__lead">
-            Загрузите ролик один раз. APEX подготовит версию под требования каждой
+            Загрузите ролик один раз. APX подготовит версию под требования каждой
             сети и опубликует её через официальные API: YouTube, Instagram, TikTok,
             Telegram, LinkedIn.
           </p>

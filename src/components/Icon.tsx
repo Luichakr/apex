@@ -60,7 +60,7 @@ export default function Icon({
   );
 }
 
-/** Знак APEX: одно видео расходится в четыре стороны. */
+/** Знак APX: одно видео расходится в четыре стороны. */
 export function Mark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>

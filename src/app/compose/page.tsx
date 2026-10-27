@@ -30,7 +30,7 @@ export default async function ComposePage() {
       <div className="grid page-head">
         <div className="z-basic">
           <h1>Новый пост</h1>
-          <p className="lead">Видео, сети, текст, время. Остальное APEX сделает сам: в каждую сеть уйдёт своя версия в лучшем качестве.</p>
+          <p className="lead">Видео, сети, текст, время. Остальное APX сделает сам: в каждую сеть уйдёт своя версия в лучшем качестве.</p>
         </div>
       </div>
       <div className="grid">

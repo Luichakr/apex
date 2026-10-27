@@ -18,7 +18,7 @@ const base64Key = z
 const schema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   APP_URL: z.string().url(),
-  APP_NAME: z.string().default("APEX"),
+  APP_NAME: z.string().default("APX"),
 
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),

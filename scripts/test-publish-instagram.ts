@@ -69,7 +69,7 @@ async function permalink(mediaId: string, token: string): Promise<string | undef
 
 async function main() {
   const file = resolve(process.argv[2] || "media/ig-test.mp4");
-  const caption = process.argv[3] || "Тест APEX → Instagram 🎬";
+  const caption = process.argv[3] || "Тест APX → Instagram 🎬";
 
   const acc = await prisma.socialAccount.findFirst({ where: { provider: "INSTAGRAM" } });
   if (!acc) throw new Error("Нет подключённого Instagram");

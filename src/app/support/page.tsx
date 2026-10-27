@@ -59,7 +59,7 @@ export default async function SupportPage() {
                   <p>Пока нечего поддерживать.</p>
                   <p className="meta" style={{ marginTop: 6 }}>
                     Здесь появятся видео друзей на YouTube и в LinkedIn за последние 2 недели, когда они опубликуют
-                    их через APEX и включат у себя переключатель выше.
+                    их через APX и включат у себя переключатель выше.
                   </p>
                 </div>
               ) : (

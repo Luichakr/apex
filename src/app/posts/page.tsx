@@ -19,7 +19,7 @@ const RETRY_MSG: Record<string, { kind: "ok" | "error" | "info"; text: string }>
 };
 
 const DELETE_MSG: Record<string, { kind: "ok" | "error" | "info"; text: string }> = {
-  ok: { kind: "ok", text: "Пост убран из APEX. В самих сетях он остался — удалить его можно там." },
+  ok: { kind: "ok", text: "Пост убран из APX. В самих сетях он остался — удалить его можно там." },
   canceled: { kind: "ok", text: "Запланированная публикация отменена." },
   busy: { kind: "error", text: "Видео сейчас загружается в сеть — удалить можно, когда загрузка закончится." },
   missing: { kind: "info", text: "Этого поста уже нет." },
@@ -56,7 +56,7 @@ export default async function PostsPage({
         <div className="z-basic between" style={{ alignItems: "flex-end" }}>
           <div>
             <h1>Публикации</h1>
-            <p className="lead">Всё, что вы отправили через APEX: статус по каждой сети и охваты.</p>
+            <p className="lead">Всё, что вы отправили через APX: статус по каждой сети и охваты.</p>
           </div>
           <nav className="tabs" aria-label="Вид">
             <Link href="/posts" aria-current="page">Список</Link>

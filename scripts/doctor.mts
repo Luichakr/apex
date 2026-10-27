@@ -1,5 +1,5 @@
 /**
- * Самопроверка установки APEX. Запуск:  npm run doctor
+ * Самопроверка установки APX. Запуск:  npm run doctor
  *
  * Ничего не меняет и никуда не публикует: только читает настройки, проверяет
  * связь с базой, Redis и ffmpeg и пробует открыть сайт по публичному адресу.
@@ -328,7 +328,7 @@ function msg(e: unknown): string {
 // --- Вывод -----------------------------------------------------------------
 
 async function main() {
-  console.log(C.bold("\nAPEX — проверка установки\n"));
+  console.log(C.bold("\nAPX — проверка установки\n"));
   checkNode();
   checkSecrets();
   checkProviders();

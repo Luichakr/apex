@@ -94,7 +94,7 @@ export default function HeaderNav({
         <div className="drawer__top">
           <Link href="/" className="wordmark">
             <Mark className="wordmark__mark" />
-            APEX
+            APX
           </Link>
           <button
             type="button"

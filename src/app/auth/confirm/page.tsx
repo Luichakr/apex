@@ -19,7 +19,7 @@ export default async function ConfirmPage({
         <h1>Подтвердите вход</h1>
         {token ? (
           <form action="/api/auth/verify" method="post" className="stack" style={{ marginTop: "var(--sp-md)" }}>
-            <p className="lead">Нажмите кнопку, чтобы войти в APEX на этом устройстве.</p>
+            <p className="lead">Нажмите кнопку, чтобы войти в APX на этом устройстве.</p>
             <input type="hidden" name="token" value={token} />
             <button className="btn btn--stretch-sm" type="submit">Войти</button>
           </form>

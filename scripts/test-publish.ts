@@ -12,7 +12,7 @@ import { publishQueue } from "../src/lib/redis";
 async function main() {
   const provider = (process.argv[2] || "").toUpperCase() as Provider;
   const file = resolve(process.argv[3] || "media/test-tiktok.mp4");
-  const caption = process.argv[4] || "Тест APEX";
+  const caption = process.argv[4] || "Тест APX";
   const size = statSync(file).size;
   const ext = file.toLowerCase().split(".").pop();
   const mediaType =
