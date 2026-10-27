@@ -57,6 +57,8 @@ model User {
   sessions Session[]
   invites  Invite[]        @relation("InviteCreatedBy")
   snippets CaptionSnippet[]
+  supportActions SupportAction[]
+  shareForSupport Boolean @default(false) // разрешил другим участникам видеть свои публикации, чтобы их поддержать
 }
 
 // Одноразовая ссылка входа (magic-link). Храним только ХЭШ токена.
@@ -180,6 +182,7 @@ model PostTarget {
   post    Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
   account SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: SetNull)
   metrics PostMetric[]
+  supportActions SupportAction[]
 
   @@index([postId])
   @@index([status])
@@ -229,4 +232,26 @@ model CaptionSnippet {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// Лайк или комментарий, который участник поставил чужой публикации
+// (только вручную, через официальный API). Строка создаётся ДО отправки:
+// уникальный ключ не даёт отправить одно и то же дважды, даже при двойном клике.
+model SupportAction {
+  id        String   @id @default(cuid())
+  actorId   String
+  accountId String // чей аккаунт соцсети поставил реакцию
+  targetId  String
+  provider  Provider
+  kind      String // LIKE | COMMENT
+  text      String?
+  status    String   @default("PENDING") // PENDING | SENT
+  createdAt DateTime @default(now())
+
+  actor  User       @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  target PostTarget @relation(fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, targetId, kind])
+  @@index([accountId, createdAt])
+  @@index([actorId])
 }

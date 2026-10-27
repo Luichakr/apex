@@ -111,4 +111,8 @@ export interface SocialProvider {
     account: DecryptedAccount,
     target: MetricsTarget
   ): Promise<FetchedMetrics | null>;
+  /** Поставить лайк чужой публикации (официальный API, только по клику человека). */
+  like?(account: DecryptedAccount, externalId: string): Promise<void>;
+  /** Написать комментарий под чужой публикацией. */
+  comment?(account: DecryptedAccount, externalId: string, text: string): Promise<void>;
 }

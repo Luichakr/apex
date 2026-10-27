@@ -50,6 +50,11 @@ const schema = z.object({
   LINKEDIN_CLIENT_ID: z.string().optional().or(z.literal("")),
   LINKEDIN_CLIENT_SECRET: z.string().optional().or(z.literal("")),
 
+  // Необязательно: ключ Anthropic для черновиков комментариев друзьям.
+  ANTHROPIC_API_KEY: z.string().optional().or(z.literal("")),
+  // 1 — выключить функцию «Поддержать друга» целиком.
+  SUPPORT_DISABLED: z.string().optional(),
+
   // Facebook-Страницы (требует бизнес-верификации Meta) — включается явно.
   META_ENABLE_FACEBOOK: z.string().optional(),
   // Печатать ссылки входа в лог, если SMTP не настроен (только для своего сервера).

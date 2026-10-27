@@ -32,7 +32,20 @@ import { httpError, PlatformError, youtubeError } from "./errors";
 const SCOPES = [
   "https://www.googleapis.com/auth/youtube.upload",
   "https://www.googleapis.com/auth/youtube.readonly",
+  // Лайки и комментарии друзьям. У каналов, подключённых раньше, этого права
+  // нет — им покажем просьбу переподключить канал.
+  "https://www.googleapis.com/auth/youtube.force-ssl",
 ];
+
+function supportFail(res: Response, text: string): PlatformError {
+  if (res.status === 403 && /insufficient|scope/i.test(text)) {
+    return new PlatformError(
+      "YouTube: у канала нет права на лайки и комментарии — переподключите канал на странице «Аккаунты»",
+      "reconnect"
+    );
+  }
+  return youtubeError(res.status, undefined, text.slice(0, 200) || `HTTP ${res.status}`);
+}
 
 function redirectUri(): string {
   return new URL("/api/connect/youtube/callback", getEnv().APP_URL).toString();
@@ -180,6 +193,36 @@ export const youtubeProvider: SocialProvider = {
   async revoke(account: DecryptedAccount): Promise<void> {
     const client = oauthClient();
     await client.revokeToken(account.accessToken).catch(() => {});
+  },
+
+  async like(account: DecryptedAccount, externalId: string): Promise<void> {
+    const url = new URL("https://www.googleapis.com/youtube/v3/videos/rate");
+    url.searchParams.set("id", externalId);
+    url.searchParams.set("rating", "like");
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${account.accessToken}`, "Content-Length": "0" },
+      cache: "no-store",
+    });
+    if (!res.ok) throw supportFail(res, await res.text().catch(() => ""));
+  },
+
+  async comment(account: DecryptedAccount, externalId: string, text: string): Promise<void> {
+    const res = await fetch("https://www.googleapis.com/youtube/v3/commentThreads?part=snippet", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${account.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        snippet: {
+          videoId: externalId,
+          topLevelComment: { snippet: { textOriginal: text } },
+        },
+      }),
+      cache: "no-store",
+    });
+    if (!res.ok) throw supportFail(res, await res.text().catch(() => ""));
   },
 
   async fetchMetrics(

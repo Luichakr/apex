@@ -196,6 +196,32 @@ export const linkedinProvider: SocialProvider = {
     };
   },
 
+  async like(account: DecryptedAccount, externalId: string): Promise<void> {
+    const actor = String(account.meta?.personUrn ?? `urn:li:person:${account.providerAccountId}`);
+    const res = await fetch(`${API}/rest/reactions?actor=${encodeURIComponent(actor)}`, {
+      method: "POST",
+      headers: { ...liHeaders(account.accessToken), "Content-Type": "application/json" },
+      body: JSON.stringify({ root: externalId, reactionType: "LIKE" }),
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      throw httpError("LinkedIn like", res.status, liMessage(await res.text().catch(() => "")));
+    }
+  },
+
+  async comment(account: DecryptedAccount, externalId: string, text: string): Promise<void> {
+    const actor = String(account.meta?.personUrn ?? `urn:li:person:${account.providerAccountId}`);
+    const res = await fetch(`${API}/rest/socialActions/${encodeURIComponent(externalId)}/comments`, {
+      method: "POST",
+      headers: { ...liHeaders(account.accessToken), "Content-Type": "application/json" },
+      body: JSON.stringify({ actor, object: externalId, message: { text } }),
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      throw httpError("LinkedIn comment", res.status, liMessage(await res.text().catch(() => "")));
+    }
+  },
+
   async fetchMetrics(
     account: DecryptedAccount,
     target: MetricsTarget
