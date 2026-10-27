@@ -21,6 +21,8 @@ export type HistoryItem = {
   comments?: number;
   shares?: number;
   reach?: number;
+  saves?: number;
+  durationSec?: number;
   kind?: string;
 };
 
@@ -41,6 +43,12 @@ const num = (v: unknown): number | undefined => {
 const firstLine = (s: string | undefined | null, max = 160) =>
   (s ?? "").split("\n").find((l) => l.trim())?.trim().slice(0, max) || "Без текста";
 
+/** «PT1M5S» → 65 секунд. */
+function isoDuration(d?: string): number | undefined {
+  const m = d?.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
+  return m ? Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0) : undefined;
+}
+
 async function youtubeRecent(acc: DecryptedAccount): Promise<HistoryItem[]> {
   const auth = { Authorization: `Bearer ${acc.accessToken}` };
   const ch = await fetch(
@@ -58,11 +66,11 @@ async function youtubeRecent(acc: DecryptedAccount): Promise<HistoryItem[]> {
   const ids = ((await pl.json()).items ?? []).map((i: { contentDetails: { videoId: string } }) => i.contentDetails.videoId);
   if (!ids.length) return [];
   const vs = await fetch(
-    `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${ids.join(",")}`,
+    `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${ids.join(",")}`,
     { headers: auth, cache: "no-store" }
   );
   if (!vs.ok) throw new Error(`YouTube: HTTP ${vs.status}`);
-  type V = { id: string; snippet: { title: string; publishedAt: string; thumbnails?: Record<string, { url: string }> }; statistics?: Record<string, string> };
+  type V = { id: string; snippet: { title: string; publishedAt: string; thumbnails?: Record<string, { url: string }> }; statistics?: Record<string, string>; contentDetails?: { duration?: string } };
   return ((await vs.json()).items as V[]).map((v) => ({
     id: v.id,
     title: v.snippet.title,
@@ -72,6 +80,7 @@ async function youtubeRecent(acc: DecryptedAccount): Promise<HistoryItem[]> {
     views: num(v.statistics?.viewCount),
     likes: num(v.statistics?.likeCount),
     comments: num(v.statistics?.commentCount),
+    durationSec: isoDuration(v.contentDetails?.duration),
   }));
 }
 
@@ -114,6 +123,7 @@ async function instagramRecent(acc: DecryptedAccount): Promise<HistoryItem[]> {
     views: stats[idx].get("views"),
     reach: stats[idx].get("reach"),
     shares: stats[idx].get("shares"),
+    saves: stats[idx].get("saved"),
     kind: m.media_product_type,
   }));
 }
@@ -150,6 +160,7 @@ async function apexRecent(userId: string, provider: Provider): Promise<HistoryIt
       likes: m?.likes ?? undefined,
       comments: m?.comments ?? undefined,
       shares: m?.shares ?? undefined,
+      saves: m?.saves ?? undefined,
     };
   });
 }
