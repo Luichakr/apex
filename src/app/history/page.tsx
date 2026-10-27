@@ -64,6 +64,9 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
             const sum = (k: keyof HistoryItem) =>
               n.items.reduce((a, i) => a + (typeof i[k] === "number" ? (i[k] as number) : 0), 0);
             const hasViews = n.items.some((i) => i.views !== undefined);
+            const viewsOf = (i: HistoryItem) => i.views ?? i.reach;
+            const known = n.items.map(viewsOf).filter((v): v is number => v !== undefined);
+            const avg = known.length >= 3 ? known.reduce((a, b) => a + b, 0) / known.length : null;
             return (
               <div key={`${n.provider}-${n.account}`} className="stack-sm">
                 <div className="between" style={{ flexWrap: "wrap", gap: 8 }}>
@@ -97,6 +100,11 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                               )}
                               {(i.views ?? i.reach) !== undefined && (
                                 <span className="hc__views">👁 {fmtNum((i.views ?? i.reach)!)}</span>
+                              )}
+                              {avg && viewsOf(i) !== undefined && Math.abs(viewsOf(i)! / avg - 1) >= 0.15 && (
+                                <span className="hc__vs" data-up={viewsOf(i)! > avg ? "1" : "0"} title="к среднему по этим пяти постам">
+                                  {viewsOf(i)! > avg ? "▲" : "▼"} {Math.round(Math.abs(viewsOf(i)! / avg - 1) * 100)}%
+                                </span>
                               )}
                               {i.durationSec !== undefined && <span className="hc__dur">{fmtDur(i.durationSec)}</span>}
                             </span>
