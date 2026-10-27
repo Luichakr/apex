@@ -30,7 +30,7 @@ export default async function ComposePage() {
       <div className="grid page-head">
         <div className="z-basic">
           <h1>Новый пост.</h1>
-          <p className="lead">Одно видео и один текст — в каждую выбранную сеть, в её лучшем качестве.</p>
+          <p className="lead">Четыре шага: видео, сети, текст, время. Остальное APEX сделает сам — в каждую сеть в её лучшем качестве.</p>
         </div>
       </div>
       <div className="grid">

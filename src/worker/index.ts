@@ -3,6 +3,7 @@
  * Берёт задачи из очереди BullMQ, готовит версию видео под сеть и публикует
  * через src/lib/publish.ts. Ретраи, итоговые статусы и уборка файлов — здесь.
  */
+import "../lib/load-env";
 import { UnrecoverableError, Worker } from "bullmq";
 import {
   connection,

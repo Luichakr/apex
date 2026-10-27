@@ -252,7 +252,7 @@ export default function ComposeForm({ accounts, snippets = [] }: { accounts: Acc
               aria-label="Выбрать видео"
             />
             <Icon name="upload" />
-            <span style={{ fontSize: "var(--fs-md)" }}>Перетащите видео или нажмите, чтобы выбрать</span>
+            <span style={{ fontSize: "var(--fs-md)" }}>Шаг 1 · Перетащите видео или нажмите, чтобы выбрать</span>
             <span className="meta">MOV, MP4, WebM, MKV · до 4 ГБ · 4K, HDR и 60 fps — без проблем</span>
           </label>
         ) : (
@@ -343,7 +343,7 @@ export default function ComposeForm({ accounts, snippets = [] }: { accounts: Acc
       {/* ── Текст и сети ── */}
       <div className="stack">
         <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend className="field__label" style={{ marginBottom: 8 }}>Куда публиковать</legend>
+          <legend className="field__label" style={{ marginBottom: 8 }}>Шаг 2 · Куда публиковать</legend>
           <div className="choice-grid">
             {accounts.map((a) => (
               <label key={a.id} className="choice">
@@ -368,7 +368,7 @@ export default function ComposeForm({ accounts, snippets = [] }: { accounts: Acc
         </fieldset>
 
         <div className="field">
-          <label className="field__label" htmlFor="caption">Текст публикации</label>
+          <label className="field__label" htmlFor="caption">Шаг 3 · Текст публикации</label>
           <textarea
             id="caption"
             className="f"
@@ -471,7 +471,7 @@ export default function ComposeForm({ accounts, snippets = [] }: { accounts: Acc
         ))}
 
         <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend className="field__label" style={{ marginBottom: 8 }}>Когда опубликовать</legend>
+          <legend className="field__label" style={{ marginBottom: 8 }}>Шаг 4 · Когда опубликовать</legend>
           <div className="row" role="radiogroup" aria-label="Когда опубликовать">
             {([
               ["now", "Сразу"],

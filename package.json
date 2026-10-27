@@ -16,6 +16,7 @@
     "keygen": "tsx scripts/keygen.ts",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "up": "bash scripts/up.sh",
     "doctor": "node --env-file=.env --import tsx scripts/doctor.mts",
     "test": "node --import tsx --test tests/*.test.mts"
   },
