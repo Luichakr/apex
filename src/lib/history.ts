@@ -87,7 +87,23 @@ async function instagramRecent(acc: DecryptedAccount): Promise<HistoryItem[]> {
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json.error) throw new Error(`Instagram: ${json.error?.message ?? `HTTP ${res.status}`}`);
   type M = { id: string; caption?: string; media_product_type?: string; media_type?: string; permalink?: string; thumbnail_url?: string; media_url?: string; timestamp?: string; like_count?: number; comments_count?: number };
-  return (json.data as M[]).slice(0, LIMIT).map((m) => ({
+  const items = (json.data as M[]).slice(0, LIMIT);
+  // Охваты — отдельным запросом на каждый пост; без права insights просто пропускаем.
+  const stats = await Promise.all(
+    items.map(async (m) => {
+      const u = new URL(`https://graph.instagram.com/v21.0/${m.id}/insights`);
+      u.searchParams.set("metric", "reach,views,shares,saved");
+      u.searchParams.set("access_token", acc.accessToken);
+      const r = await fetch(u, { cache: "no-store" }).catch(() => null);
+      const j = r ? await r.json().catch(() => null) : null;
+      const by = new Map<string, number>();
+      for (const row of (j?.data ?? []) as { name?: string; values?: { value?: number }[] }[]) {
+        if (row.name && typeof row.values?.[0]?.value === "number") by.set(row.name, row.values[0].value);
+      }
+      return by;
+    })
+  );
+  return items.map((m, idx) => ({
     id: m.id,
     title: firstLine(m.caption),
     url: m.permalink,
@@ -95,6 +111,9 @@ async function instagramRecent(acc: DecryptedAccount): Promise<HistoryItem[]> {
     publishedAt: m.timestamp,
     likes: m.like_count,
     comments: m.comments_count,
+    views: stats[idx].get("views"),
+    reach: stats[idx].get("reach"),
+    shares: stats[idx].get("shares"),
     kind: m.media_product_type,
   }));
 }
@@ -156,7 +175,12 @@ export async function loadHistory(userId: string, force = false): Promise<Networ
           let acc = (await getDecryptedAccount(a.id))!;
           const p = getProvider(a.provider);
           if (p?.ensureFreshToken) acc = await p.ensureFreshToken(acc);
-          result = { ...base, source: "network", items: await reader(acc) };
+          const items = await reader(acc);
+          result = { ...base, source: "network", items };
+          if (a.provider === "INSTAGRAM" && items.length && items.every((i) => i.reach === undefined)) {
+            result.note =
+              "Охваты и просмотры не пришли: у аккаунта нет права на статистику. Переподключите Instagram на странице «Аккаунты» и разрешите доступ к статистике.";
+          }
         } catch (e) {
           result = {
             ...base,

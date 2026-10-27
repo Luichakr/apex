@@ -25,7 +25,12 @@ import { metaError, metaUsagePercent, parseRetryAfter, PlatformError } from "./e
 const AUTH_BASE = "https://www.instagram.com/oauth/authorize";
 const TOKEN_URL = "https://api.instagram.com/oauth/access_token";
 const GRAPH = "https://graph.instagram.com";
-const SCOPES = ["instagram_business_basic", "instagram_business_content_publish"];
+const SCOPES = [
+  "instagram_business_basic",
+  "instagram_business_content_publish",
+  // Охваты, просмотры, репосты и сохранения (нужно переподключить аккаунт).
+  "instagram_business_manage_insights",
+];
 
 function redirectUri(): string {
   return new URL("/api/connect/instagram/callback", getEnv().APP_URL).toString();
