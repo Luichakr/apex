@@ -9,42 +9,54 @@ import PostCard from "@/components/PostCard";
 import AutoRefresh from "@/app/posts/auto-refresh";
 import { PROVIDER_LABEL } from "@/lib/limits";
 
-export const metadata: Metadata = { title: "Кабинет" };
+export const metadata: Metadata = { title: "Обзор" };
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ pw?: string }>;
-}) {
+const fmtNum = (n: number) =>
+  n < 1000 ? String(n) : n < 10_000 ? `${(n / 1000).toFixed(1).replace(".0", "")}k` : `${Math.round(n / 1000)}k`;
+const DAYS = 30;
+
+export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  const sp = await searchParams;
 
   const ownerId = await dataOwnerId(user);
-  const [accounts, total, inWork, failed, recent, worker] = await Promise.all([
+  const since = new Date(Date.now() - DAYS * 86_400_000);
+  const [accounts, published, scheduled, failed, recent, worker, doneTargets] = await Promise.all([
     prisma.socialAccount.findMany({
       where: { userId: ownerId },
-      select: { provider: true, displayName: true },
+      select: { id: true, provider: true, displayName: true, needsReconnect: true, tokenExpiresAt: true, refreshTokenEnc: true },
+      orderBy: { provider: "asc" },
     }),
-    prisma.post.count({ where: { userId: ownerId } }),
+    prisma.post.count({ where: { userId: ownerId, status: { in: ["DONE", "PARTIAL"] }, createdAt: { gte: since } } }),
     prisma.post.count({ where: { userId: ownerId, status: { in: ["PUBLISHING", "SCHEDULED"] } } }),
     prisma.postTarget.count({ where: { post: { userId: ownerId }, status: "FAILED" } }),
     prisma.post.findMany({
       where: { userId: ownerId },
       orderBy: { createdAt: "desc" },
       take: 3,
-      include: {
-        targets: {
-          orderBy: { provider: "asc" },
-          include: { metrics: { orderBy: { fetchedAt: "desc" }, take: 1 } },
-        },
-      },
+      include: { targets: { orderBy: { provider: "asc" }, include: { metrics: { orderBy: { fetchedAt: "desc" }, take: 1 } } } },
     }),
     workerHealth(),
+    prisma.postTarget.findMany({
+      where: { post: { userId: ownerId }, status: "DONE", createdAt: { gte: since } },
+      select: { metrics: { orderBy: { fetchedAt: "desc" }, take: 1, select: { views: true, reach: true, likes: true, comments: true } } },
+    }),
   ]);
-  const networks = [...new Set(accounts.map((a) => PROVIDER_LABEL[a.provider]))];
+
+  // Охват за период: по каждой публикации берём последний замер.
+  let views = 0, reactions = 0, measured = 0;
+  for (const t of doneTargets) {
+    const m = t.metrics[0];
+    if (!m) continue;
+    measured++;
+    views += m.views ?? m.reach ?? 0;
+    reactions += (m.likes ?? 0) + (m.comments ?? 0);
+  }
   const pending = recent.some((p) => p.status === "PUBLISHING");
+  const soon = new Date(Date.now() + 7 * 86_400_000);
+  const state = (a: (typeof accounts)[number]) =>
+    a.needsReconnect ? "error" : !a.refreshTokenEnc && a.tokenExpiresAt && a.tokenExpiresAt < soon ? "warn" : "ok";
 
   return (
     <main>
@@ -52,113 +64,95 @@ export default async function DashboardPage({
       <div className="grid page-head">
         <div className="z-basic between" style={{ alignItems: "flex-end" }}>
           <div>
-            <p className="eyebrow">{user.role === "OWNER" ? "Владелец" : user.role === "VIEWER" ? "Наблюдатель" : "Участник"}</p>
-            <h1 style={{ marginTop: 8 }}>Здравствуйте{user.name ? `, ${user.name}` : ""}.</h1>
-            <p className="meta" style={{ marginTop: 6 }}>{user.email}</p>
+            <h1>Обзор</h1>
+            <p className="lead">Что вышло за {DAYS} дней, сколько это собрало и всё ли в порядке с доступами.</p>
           </div>
-          <div className="row">
-            {user.role !== "VIEWER" && (
-              <Link href="/compose" className="btn btn--stretch-sm">
-                <Icon name="plus" /> Новый пост
-              </Link>
-            )}
-            <form action="/api/auth/logout" method="post" className="hide-mobile">
-              <button className="btn btn--tool" type="submit">Выйти</button>
-            </form>
-          </div>
+          <Link href="/history" className="link-arrow"><Icon name="arrow" /> Подробная статистика</Link>
         </div>
       </div>
 
       <div className="grid">
         <div className="z-basic stack">
-          <div className="panel">
-            <dl className="spec spec--big">
-              <div><dt>Подключено сетей</dt><dd>{networks.length}</dd></div>
-              <div><dt>Публикаций</dt><dd>{total}</dd></div>
-              <div><dt>В работе</dt><dd>{inWork}</dd></div>
-              <div><dt>Ошибок</dt><dd style={failed ? { color: "var(--error)" } : undefined}>{failed}</dd></div>
-            </dl>
-          </div>
-
           {!worker.alive && (
             <div className="msg msg--error" role="alert">
               <Icon name="alert" />
               <div className="msg__body">
-                <p>
-                  <b>Обработчик публикаций не отвечает.</b>{" "}
-                  {worker.reachable
-                    ? "Новые публикации будут ждать в очереди, пока он не запустится."
-                    : "Нет связи с Redis — очередь недоступна."}
-                </p>
-                <p className="meta">
-                  Запустите его командой <code>npm run worker</code> (или{" "}
-                  <code>docker compose up -d worker</code>), затем проверьте всё командой{" "}
-                  <code>npm run doctor</code>.
-                </p>
+                <p><b>Обработчик публикаций не запущен.</b> Видео будут ждать в очереди.</p>
+                <p className="meta">Запустите всё командой <code>npm run up</code>.</p>
               </div>
             </div>
           )}
-
           {failed > 0 && (
             <div className="msg msg--error">
               <Icon name="alert" />
               <div className="msg__body">
-                <p>
-                  Публикаций с ошибкой: <b>{failed}</b>. Их можно повторить одной кнопкой.
-                </p>
-                <p><Link href="/posts" className="link-arrow"><Icon name="arrow" /> Открыть публикации</Link></p>
+                <p>Публикаций с ошибкой: <b>{failed}</b>.</p>
+                <p><Link href="/posts" className="link-arrow"><Icon name="arrow" /> Посмотреть и повторить</Link></p>
               </div>
             </div>
           )}
 
-          {accounts.length === 0 ? (
-            <div className="msg">
-              <Icon name="link" />
-              <div className="msg__body">
-                <p>Подключите YouTube, Instagram или TikTok — и можно публиковать.</p>
-                <p><Link href="/accounts" className="link-arrow"><Icon name="arrow" /> К аккаунтам</Link></p>
-              </div>
+          <div className="kpis">
+            <div className="kpi">
+              <span className="kpi__label">Опубликовано за {DAYS} дней</span>
+              <span className="kpi__value">{published}</span>
+              <span className="kpi__sub">{scheduled ? `ещё ${scheduled} в работе или по расписанию` : "ничего не ждёт"}</span>
             </div>
-          ) : (
-            <p className="muted">
-              Подключено: {networks.join(", ")}. <Link href="/accounts">Управлять</Link>
-            </p>
-          )}
-
-          {sp.pw === "set" && (
-            <div className="msg msg--ok" role="status">
-              <Icon name="check" />
-              <div className="msg__body">Пароль сохранён. Теперь можно входить по email и паролю.</div>
+            <div className="kpi">
+              <span className="kpi__label">Просмотры и охват</span>
+              <span className="kpi__value">{measured ? fmtNum(views) : "—"}</span>
+              <span className="kpi__sub">{measured ? `по ${measured} публикациям` : "сбор раз в 6 часов"}</span>
             </div>
-          )}
-
-          <details className="panel" style={{ padding: "4px var(--sp-md)" }}>
-            <summary style={{ cursor: "pointer", minHeight: 52, display: "flex", alignItems: "center" }}>
-              Пароль для входа
-            </summary>
-            <form action="/api/auth/set-password" method="post" className="stack-sm" style={{ paddingBottom: "var(--sp-md)" }}>
-              <p className="meta">
-                Вход по email и паролю — удобно, когда почта не настроена. Минимум 8 символов.
-              </p>
-              <div className="field" style={{ maxWidth: 360 }}>
-                <label className="field__label" htmlFor="new-pw">Новый пароль</label>
-                <input id="new-pw" className="f" type="password" name="password" minLength={8} required autoComplete="new-password" placeholder="Минимум 8 символов" />
-              </div>
-              <div><button className="btn btn--stretch-sm" type="submit">Сохранить пароль</button></div>
-            </form>
-          </details>
-
-          <div className="between" style={{ marginTop: "var(--sp-lg)" }}>
-            <h2>Последние публикации.</h2>
-            {total > 3 && (
-              <Link href="/posts" className="link-arrow"><Icon name="arrow" /> Все публикации</Link>
-            )}
+            <div className="kpi">
+              <span className="kpi__label">Лайки и комментарии</span>
+              <span className="kpi__value">{measured ? fmtNum(reactions) : "—"}</span>
+              <span className="kpi__sub">за те же публикации</span>
+            </div>
+            <div className="kpi">
+              <span className="kpi__label">Ошибок</span>
+              <span className="kpi__value" style={failed ? { color: "var(--error)" } : undefined}>{failed}</span>
+              <span className="kpi__sub">{failed ? "нужно повторить" : "всё прошло"}</span>
+            </div>
           </div>
-          {recent.length === 0 ? (
-            <p className="muted">Пока ничего не опубликовано.</p>
-          ) : (
-            recent.map((p) => <PostCard key={p.id} post={p} canEdit={user.role !== "VIEWER"} />)
-          )}
+
+          <section className="stack-sm">
+            <div className="between">
+              <h2 style={{ fontSize: "var(--fs-lg)" }}>Сети</h2>
+              <Link href="/accounts" className="link-arrow"><Icon name="arrow" /> Управлять</Link>
+            </div>
+            {accounts.length === 0 ? (
+              <p className="muted">Ничего не подключено. <Link href="/accounts">Подключить сети</Link></p>
+            ) : (
+              <div className="nets">
+                {accounts.map((a) => {
+                  const st = state(a);
+                  return (
+                    <Link key={a.id} href="/accounts" className="net">
+                      <span className="net__dot" data-state={st} />
+                      <span style={{ minWidth: 0 }}>
+                        <div className="net__name">{PROVIDER_LABEL[a.provider]}</div>
+                        <div className="net__sub">
+                          {st === "error" ? "нужно переподключить" : st === "warn" ? "доступ скоро истечёт" : a.displayName ?? "подключён"}
+                        </div>
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          <section className="stack-sm">
+            <div className="between">
+              <h2 style={{ fontSize: "var(--fs-lg)" }}>Последние публикации</h2>
+              <Link href="/posts" className="link-arrow"><Icon name="arrow" /> Все публикации</Link>
+            </div>
+            {recent.length === 0 ? (
+              <p className="muted">Пока ничего не опубликовано. <Link href="/compose">Создать первый пост</Link></p>
+            ) : (
+              recent.map((p) => <PostCard key={p.id} post={p} canEdit={user.role !== "VIEWER"} />)
+            )}
+          </section>
         </div>
       </div>
     </main>

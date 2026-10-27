@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { getCurrentUser } from "@/lib/auth";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import AccountAlert from "@/components/AccountAlert";
+import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: { default: "APEX", template: "%s — APEX" },
@@ -16,14 +18,23 @@ export const viewport: Viewport = {
   themeColor: "#ffffff",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser().catch(() => null);
   return (
     <html lang="ru">
       <body>
-        <SiteHeader />
-        <AccountAlert />
-        {children}
-        <SiteFooter />
+        {user ? (
+          <AppShell user={user}>
+            <AccountAlert />
+            {children}
+          </AppShell>
+        ) : (
+          <>
+            <SiteHeader />
+            {children}
+            <SiteFooter />
+          </>
+        )}
       </body>
     </html>
   );

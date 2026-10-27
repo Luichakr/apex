@@ -21,5 +21,5 @@ export async function POST(req: Request) {
     data: { passwordHash: hashPassword(parsed.data.password) },
   });
   const { getEnv } = await import("@/lib/env");
-  return NextResponse.redirect(new URL("/dashboard?pw=set", getEnv().APP_URL), 303);
+  return NextResponse.redirect(new URL("/settings?pw=set", getEnv().APP_URL), 303);
 }

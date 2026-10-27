@@ -752,3 +752,76 @@ select.f { cursor: pointer; }
 .hc__vs { position: absolute; top: 6px; left: 6px; padding: 2px 7px; border-radius: 999px; font-size: 12px; line-height: 1.4; color: #fff; background: rgba(0, 0, 0, 0.62); }
 .hc__vs[data-up="1"] { background: rgba(22, 130, 60, 0.9); }
 .hc__vs[data-up="0"] { background: rgba(180, 50, 40, 0.9); }
+
+/* ── КАРКАС ПРИЛОЖЕНИЯ: меню слева, контент на всю ширину ─────────────── */
+:root { --sb-w: 248px; --app-max: 1480px; --app-pad: clamp(16px, 2.5vw, 40px); }
+.app { display: grid; grid-template-columns: var(--sb-w) minmax(0, 1fr); min-height: 100dvh; }
+.sb {
+  position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; gap: 6px;
+  padding: 20px 14px calc(14px + env(safe-area-inset-bottom));
+  background: var(--surface); border-right: 1px solid rgba(79, 80, 89, 0.14);
+}
+.sb__brand { padding: 6px 12px 16px; }
+.sb__new { min-height: 48px; margin: 0 2px 12px; }
+.sb__nav { display: flex; flex-direction: column; gap: 14px; flex: 1; overflow: auto; }
+.sb__group { display: flex; flex-direction: column; gap: 2px; }
+.sb__title { padding: 10px 14px 4px; font-size: var(--fs-2xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-medium); }
+.sb__link {
+  display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px;
+  border: 0; border-radius: var(--r-lg); background: none; text-decoration: none; text-align: left;
+  color: var(--ink-higher); font-size: var(--fs-sm); cursor: pointer; width: 100%;
+  transition: background-color var(--t-sm) var(--ease), color var(--t-sm) var(--ease);
+}
+.sb__link svg { flex: none; color: var(--ink-high); }
+.sb__link:hover { background: rgba(100, 101, 114, 0.14); color: var(--primary); }
+.sb__link[aria-current="page"] { background: var(--canvas); color: var(--primary); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
+.sb__link[aria-current="page"] svg { color: var(--action); }
+.sb__foot { border-top: 1px solid rgba(79, 80, 89, 0.14); padding-top: 10px; display: flex; flex-direction: column; gap: 2px; }
+.sb__user { padding: 6px 14px 2px; font-size: var(--fs-xs); color: var(--ink-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app__main { min-width: 0; display: flex; flex-direction: column; }
+.app__main > main { flex: 1 0 auto; width: 100%; max-width: var(--app-max); padding: 0 var(--app-pad) var(--sp-xl); }
+.topbar { display: none; }
+
+/* Внутри приложения старая сетка лендинга не нужна: всё в одну колонку контента. */
+.app__main .grid { display: block; padding: 0; max-width: none; }
+.app__main .z-full, .app__main .z-wide, .app__main .z-extended, .app__main .z-basic, .app__main .z-narrow { display: block; max-width: none; }
+.app__main .page-head { padding-top: 28px; padding-bottom: 20px; }
+.app__main .page-head h1 { font-size: var(--fs-2xl); }
+.app__main .lead { max-width: 70ch; }
+.app__main .alertbar { margin: 12px var(--app-pad) 0; border-radius: var(--r-xl); border: 1px solid rgba(186, 23, 31, 0.2); padding: 12px 16px; }
+
+/* Вкладки внутри раздела (Список / Календарь). */
+.tabs { display: flex; gap: 4px; padding: 4px; background: var(--surface); border-radius: var(--r-xl); width: max-content; max-width: 100%; }
+.tabs a { min-height: 40px; display: inline-flex; align-items: center; padding: 0 16px; border-radius: var(--r-lg); text-decoration: none; color: var(--ink-higher); white-space: nowrap; }
+.tabs a[aria-current="page"] { background: var(--canvas); color: var(--primary); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
+
+/* Сводные карточки обзора и состояние сетей. */
+.kpis { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 900px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.kpi { background: var(--surface); border-radius: var(--r-2xl); padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpi__label { font-size: var(--fs-xs); color: var(--ink-high); }
+.kpi__value { font-size: var(--fs-2xl); line-height: 1.1; }
+.kpi__sub { font-size: var(--fs-xs); color: var(--ink-medium); }
+.nets { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.net { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid rgba(79, 80, 89, 0.16); border-radius: var(--r-xl); text-decoration: none; min-width: 0; }
+.net__dot { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--ok); }
+.net__dot[data-state="warn"] { background: var(--warn); }
+.net__dot[data-state="error"] { background: var(--error); }
+.net__name { font-weight: 600; }
+.net__sub { font-size: var(--fs-xs); color: var(--ink-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.two { display: grid; gap: var(--sp-md); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1100px) { .two { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); } }
+
+@media (max-width: 1023px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .sb { display: none; }
+  .topbar {
+    position: sticky; top: 0; z-index: var(--z-hdr); display: flex; align-items: center; gap: var(--sp-md);
+    height: var(--hdr-h); padding: 0 var(--app-pad);
+    background: var(--hdr-glass); backdrop-filter: var(--blur) saturate(1.4); -webkit-backdrop-filter: var(--blur) saturate(1.4);
+    border-bottom: 1px solid rgba(79, 80, 89, 0.12);
+  }
+  .topbar .hdr__nav { display: none; }
+  .topbar .hdr__actions { margin-left: auto; }
+  .topbar .hdr__actions .hdr__menu-btn { display: inline-flex; }
+}

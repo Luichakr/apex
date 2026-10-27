@@ -6,7 +6,7 @@ import { loadHistory, type HistoryItem } from "@/lib/history";
 import { PROVIDER_LABEL } from "@/lib/limits";
 import Icon from "@/components/Icon";
 
-export const metadata: Metadata = { title: "История" };
+export const metadata: Metadata = { title: "Статистика" };
 export const dynamic = "force-dynamic";
 
 const fmtDate = (iso?: string) =>
@@ -46,8 +46,8 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
       <div className="grid page-head">
         <div className="z-wide between" style={{ alignItems: "flex-end" }}>
           <div>
-            <h1>История.</h1>
-            <p className="lead">Последние 5 публикаций каждой сети со статистикой.</p>
+            <h1>Статистика</h1>
+            <p className="lead">Последние 5 публикаций в каждой сети: просмотры, охват, реакции. Данные берутся из самих сетей.</p>
           </div>
           <Link href="/history?fresh=1" className="btn btn--tool btn--stretch-sm">
             <Icon name="refresh" /> Обновить

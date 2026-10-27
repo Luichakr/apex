@@ -55,14 +55,13 @@ export default async function PostsPage({
       <div className="grid page-head">
         <div className="z-basic between" style={{ alignItems: "flex-end" }}>
           <div>
-            <h1>Публикации.</h1>
-            <p className="lead">Статус по каждой сети и что именно ушло в публикацию.</p>
+            <h1>Публикации</h1>
+            <p className="lead">Всё, что вы отправили через APEX: статус по каждой сети и охваты.</p>
           </div>
-          {user.role !== "VIEWER" && (
-            <Link href="/compose" className="btn btn--stretch-sm">
-              <Icon name="plus" /> Новый пост
-            </Link>
-          )}
+          <nav className="tabs" aria-label="Вид">
+            <Link href="/posts" aria-current="page">Список</Link>
+            <Link href="/calendar">Календарь</Link>
+          </nav>
         </div>
       </div>
       <div className="grid">

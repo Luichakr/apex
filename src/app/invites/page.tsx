@@ -28,7 +28,7 @@ export default async function InvitesPage({
     <main>
       <div className="grid page-head">
         <div className="z-basic">
-          <h1>Приглашения.</h1>
+          <h1>Приглашения</h1>
           <p className="lead">
             Сервис закрытый: новый человек входит только с кодом. Один код — один человек.
           </p>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { PostStatus } from "@prisma/client";
-import { getCurrentUser, dataOwnerId, canPublish } from "@/lib/auth";
+import { getCurrentUser, dataOwnerId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PROVIDER_LABEL } from "@/lib/limits";
 import Icon from "@/components/Icon";
@@ -83,14 +83,13 @@ export default async function CalendarPage({
       <div className="grid page-head">
         <div className="z-basic between" style={{ alignItems: "flex-end" }}>
           <div>
-            <h1>Календарь.</h1>
-            <p className="lead">Что запланировано и что уже вышло — по дням (время киевское).</p>
+            <h1>Публикации</h1>
+            <p className="lead">Что запланировано и что уже вышло, по дням. Время киевское.</p>
           </div>
-          {canPublish(user) && (
-            <Link href="/compose" className="btn btn--stretch-sm">
-              <Icon name="plus" /> Новый пост
-            </Link>
-          )}
+          <nav className="tabs" aria-label="Вид">
+            <Link href="/posts">Список</Link>
+            <Link href="/calendar" aria-current="page">Календарь</Link>
+          </nav>
         </div>
       </div>
       <div className="grid">

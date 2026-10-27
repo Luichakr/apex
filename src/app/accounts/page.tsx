@@ -101,7 +101,7 @@ export default async function AccountsPage({
     <main>
       <div className="grid page-head">
         <div className="z-basic">
-          <h1>Аккаунты.</h1>
+          <h1>Аккаунты</h1>
           {isViewer && (
             <p className="lead" style={{ color: "var(--warn)" }}>
               Вы вошли как наблюдатель: видите, что подключено, но подключать и
@@ -109,9 +109,8 @@ export default async function AccountsPage({
             </p>
           )}
           <p className="lead">
-            Пароли от соцсетей сюда не вводятся: YouTube, Instagram и TikTok
-            подключаются на их собственных сайтах, Telegram — токеном бота, который
-            вы заводите сами. Отключить можно в любой момент.
+            Сети, куда уходят видео. Подключение идёт на сайте самой сети, пароли сюда
+            не вводятся. Если доступ слетел, нажмите «Переподключить».
           </p>
         </div>
       </div>

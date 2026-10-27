@@ -34,7 +34,7 @@ export default async function SupportPage() {
     <main>
       <div className="grid page-head">
         <div className="z-basic">
-          <h1>Поддержать друзей.</h1>
+          <h1>Поддержать друзей</h1>
           <p className="lead">
             Лайк и тёплый комментарий под видео друзей — от вашего аккаунта, вручную, через официальный API.
           </p>
