@@ -10,6 +10,7 @@ export default async function SiteHeader() {
     ? [
         { href: "/dashboard", label: "Кабинет" },
         { href: "/posts", label: "Публикации" },
+        { href: "/history", label: "История" },
         { href: "/calendar", label: "Календарь" },
         { href: "/support", label: "Друзья" },
         { href: "/accounts", label: "Аккаунты" },
