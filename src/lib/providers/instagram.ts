@@ -30,6 +30,8 @@ const SCOPES = [
   "instagram_business_content_publish",
   // Охваты, просмотры, репосты и сохранения (нужно переподключить аккаунт).
   "instagram_business_manage_insights",
+  // Чтение комментариев: считаем, на какие вы ещё не ответили.
+  "instagram_business_manage_comments",
 ];
 
 function redirectUri(): string {
