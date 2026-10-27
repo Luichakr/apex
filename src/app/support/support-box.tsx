@@ -69,7 +69,7 @@ export default function SupportBox({
     <div className="stack-sm" style={{ marginTop: 10 }}>
       <label className="choice" style={{ minHeight: 44 }}>
         <input type="checkbox" checked={liked || like} disabled={liked || busy} onChange={(e) => setLike(e.target.checked)} />
-        <span className="choice__box" aria-hidden />
+        <span className="choice__box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
         <span>{liked ? "Лайк уже стоит" : "Поставить лайк"}</span>
       </label>
 

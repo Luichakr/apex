@@ -37,7 +37,7 @@ export default async function ComposePage() {
         <div className="z-basic">
           {accounts.length === 0 ? (
             <div className="panel stack-sm">
-              <h2 style={{ fontSize: "var(--fs-lg)" }}>Сначала подключите сеть.</h2>
+              <h2 style={{ fontSize: "var(--fs-lg)" }}>Сначала подключите сеть</h2>
               <p className="muted">Хотя бы одну: YouTube, Instagram или TikTok.</p>
               <div>
                 <Link className="btn" href="/accounts"><Icon name="link" /> К аккаунтам</Link>

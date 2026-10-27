@@ -16,7 +16,7 @@ export default async function ConfirmPage({
   return (
     <main className="grid section">
       <div className="z-narrow" style={{ maxWidth: 520 }}>
-        <h1>Подтвердите вход.</h1>
+        <h1>Подтвердите вход</h1>
         {token ? (
           <form action="/api/auth/verify" method="post" className="stack" style={{ marginTop: "var(--sp-md)" }}>
             <p className="lead">Нажмите кнопку, чтобы войти в APEX на этом устройстве.</p>

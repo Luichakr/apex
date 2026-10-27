@@ -67,7 +67,6 @@ export default async function DashboardPage() {
             <h1>Обзор</h1>
             <p className="lead">Что вышло за {DAYS} дней, сколько это собрало и всё ли в порядке с доступами.</p>
           </div>
-          <Link href="/history" className="link-arrow"><Icon name="arrow" /> Подробная статистика</Link>
         </div>
       </div>
 
@@ -92,6 +91,11 @@ export default async function DashboardPage() {
             </div>
           )}
 
+          <section className="stack-sm">
+            <div className="between">
+              <h2 style={{ fontSize: "var(--fs-lg)" }}>За {DAYS} дней</h2>
+              <Link href="/history" className="link-arrow"><Icon name="arrow" /> Статистика по постам</Link>
+            </div>
           <div className="kpis">
             <div className="kpi">
               <span className="kpi__label">Опубликовано за {DAYS} дней</span>
@@ -114,6 +118,7 @@ export default async function DashboardPage() {
               <span className="kpi__sub">{failed ? "нужно повторить" : "всё прошло"}</span>
             </div>
           </div>
+          </section>
 
           <section className="stack-sm">
             <div className="between">

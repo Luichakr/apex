@@ -543,7 +543,7 @@ textarea.f { padding: 14px 16px; min-height: 140px; resize: vertical; line-heigh
 
 /* Герой главной — типографика вместо фотографии. */
 .hero { padding: calc(var(--sp-2xl) * 0.7) 0 var(--sp-xl); }
-.hero__title { max-width: 14ch; }
+.hero__title { max-width: 18ch; font-size: var(--fs-3xl); }
 .hero__lead { margin-top: var(--sp-md); }
 .hero__cta { margin-top: var(--sp-lg); }
 .band { background: var(--surface); }
@@ -761,8 +761,8 @@ select.f { cursor: pointer; }
   padding: 20px 14px calc(14px + env(safe-area-inset-bottom));
   background: var(--surface); border-right: 1px solid rgba(79, 80, 89, 0.14);
 }
-.sb__brand { padding: 6px 12px 16px; }
-.sb__new { min-height: 48px; margin: 0 2px 12px; }
+.sb__brand { padding: 6px 14px 16px; }
+.sb__new { min-height: 48px; margin: 0 0 12px; }
 .sb__nav { display: flex; flex-direction: column; gap: 14px; flex: 1; overflow: auto; }
 .sb__group { display: flex; flex-direction: column; gap: 2px; }
 .sb__title { padding: 10px 14px 4px; font-size: var(--fs-2xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-medium); }
@@ -825,3 +825,6 @@ select.f { cursor: pointer; }
   .topbar .hdr__actions { margin-left: auto; }
   .topbar .hdr__actions .hdr__menu-btn { display: inline-flex; }
 }
+
+.rows.rows--cards > li { padding: 14px 18px; border: 1px solid rgba(79, 80, 89, 0.16); border-radius: var(--r-xl); }
+.rows.rows--cards > li + li { margin-top: 10px; }

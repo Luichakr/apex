@@ -96,7 +96,7 @@ export default async function CalendarPage({
         <div className="z-basic stack">
           <div className="between">
             <Link className="btn btn--tool btn--sm" href={`/calendar?m=${monthParam(y, mo - 1)}`}>← Назад</Link>
-            <h2 style={{ fontSize: "var(--fs-lg)", textTransform: "capitalize" }}>{title}</h2>
+            <h2 style={{ fontSize: "var(--fs-lg)" }}>{title.charAt(0).toUpperCase() + title.slice(1)}</h2>
             <Link className="btn btn--tool btn--sm" href={`/calendar?m=${monthParam(y, mo + 1)}`}>Вперёд →</Link>
           </div>
           <div className="cal" role="table" aria-label={`Публикации, ${title}`}>

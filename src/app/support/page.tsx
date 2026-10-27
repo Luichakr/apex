@@ -51,14 +51,17 @@ export default async function SupportPage() {
             <>
               <ShareToggle initial={me?.shareForSupport ?? false} />
               <p className="meta">
-                <Icon name="shield" /> Сегодня использовано {usedToday} из {DAILY_LIMIT} действий. Лимит и паузы между
-                действиями защищают аккаунты от блокировки: сети считают частые автоматические реакции спамом. Работает
-                для YouTube и LinkedIn; если нужен другой аккаунт или права — переподключите его на странице «Аккаунты».
+                Сегодня использовано {usedToday} из {DAILY_LIMIT} действий. Лимит и паузы между действиями берегут
+                аккаунты от блокировки: частые автоматические реакции сети считают спамом. Работает для YouTube и LinkedIn.
               </p>
               {items.length === 0 ? (
-                <p className="lead">
-                  Пока нечего поддерживать. Здесь появятся видео друзей на YouTube и в LinkedIn за последние 2 недели — когда они опубликуют что-то через APEX и включат переключатель выше. Попросите друзей включить его у себя.
-                </p>
+                <div className="panel">
+                  <p>Пока нечего поддерживать.</p>
+                  <p className="meta" style={{ marginTop: 6 }}>
+                    Здесь появятся видео друзей на YouTube и в LinkedIn за последние 2 недели, когда они опубликуют
+                    их через APEX и включат у себя переключатель выше.
+                  </p>
+                </div>
               ) : (
                 <ul className="rows">
                   {items.map(({ target: t, liked, commented }) => (

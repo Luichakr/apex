@@ -1,35 +1,29 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import Icon from "@/components/Icon";
 import { getCurrentUser } from "@/lib/auth";
 
+/** Главная для невошедших. Кто вошёл — сразу в Обзор. */
 export default async function HomePage() {
   const user = await getCurrentUser().catch(() => null);
+  if (user) redirect("/dashboard");
+
   return (
     <main>
       <section className="grid hero">
         <div className="z-basic">
           <p className="eyebrow">Кросс-постинг видео</p>
-          <h1 className="display hero__title" style={{ marginTop: 12 }}>
-            Одно видео. Три сети. Без потери качества.
+          <h1 className="hero__title" style={{ marginTop: 12 }}>
+            Одно видео — во все ваши сети. Без потери качества.
           </h1>
           <p className="lead hero__lead">
-            Загрузите ролик один раз — APEX подготовит отдельную версию под
-            требования YouTube Shorts, Instagram Reels и TikTok и опубликует её
-            через официальные API.
+            Загрузите ролик один раз. APEX подготовит версию под требования каждой
+            сети и опубликует её через официальные API: YouTube, Instagram, TikTok,
+            Telegram, LinkedIn.
           </p>
           <div className="row hero__cta">
-            {user ? (
-              <Link href="/compose" className="btn btn--stretch-sm">
-                <Icon name="plus" /> Новый пост
-              </Link>
-            ) : (
-              <Link href="/login" className="btn btn--stretch-sm">
-                Войти
-              </Link>
-            )}
-            <a href="#quality" className="link-arrow">
-              <Icon name="arrow" /> Как сохраняется качество
-            </a>
+            <Link href="/login" className="btn btn--stretch-sm">Войти</Link>
+            <a href="#flow" className="link-arrow"><Icon name="arrow" /> Как это работает</a>
           </div>
         </div>
       </section>
@@ -37,7 +31,7 @@ export default async function HomePage() {
       <section className="band section" id="flow">
         <div className="grid">
           <div className="z-basic">
-            <h2>Как это работает.</h2>
+            <h2>Как это работает</h2>
             <div className="flow" style={{ marginTop: "var(--sp-md)" }}>
               <div className="flow__item">
                 <span className="meta">01</span>
@@ -52,12 +46,12 @@ export default async function HomePage() {
               <div className="flow__item">
                 <span className="meta">03</span>
                 <h3>Публикация</h3>
-                <p>Сразу или по расписанию. Повторы при сбое безопасны — без дублей.</p>
+                <p>Сразу или по расписанию. Повторы при сбое безопасны, без дублей.</p>
               </div>
               <div className="flow__item">
                 <span className="meta">04</span>
-                <h3>Статус</h3>
-                <p>Ссылка на каждый пост, понятная причина, если сеть что-то отклонила.</p>
+                <h3>Статистика</h3>
+                <p>Просмотры, охват и реакции по каждой публикации собираются сами.</p>
               </div>
             </div>
           </div>
@@ -67,64 +61,33 @@ export default async function HomePage() {
       <section className="section" id="quality">
         <div className="grid">
           <div className="z-basic">
-            <h2>Качество — главное.</h2>
-            <p className="lead" style={{ marginTop: "var(--sp-sm)" }}>
-              Каждая перекодировка — это потеря. Поэтому мы перекодируем только тогда,
-              когда сеть иначе видео не примет, и ровно настолько, насколько требует её
-              спецификация.
-            </p>
+            <h2>Качество и безопасность</h2>
             <div className="tiles tiles--3" style={{ marginTop: "var(--sp-md)" }}>
               <div className="tile">
-                <span className="tile__num">YouTube Shorts</span>
-                <h3>Оригинал без изменений.</h3>
+                <span className="tile__num">Качество</span>
+                <h3>Перекодируем только когда без этого нельзя.</h3>
                 <p className="muted">
-                  YouTube принимает HEVC, HDR и 4K и сам строит лучшие версии. Файл уходит
-                  байт в байт, загрузка докачивается при обрыве связи.
+                  YouTube получает оригинал байт в байт. Для остальных сетей видео
+                  переупаковывается без пережатия, а если сеть требует, кодируется ровно
+                  по её спецификации.
                 </p>
               </div>
               <div className="tile">
-                <span className="tile__num">TikTok</span>
-                <h3>Перепаковка без пережатия.</h3>
+                <span className="tile__num">Доступы</span>
+                <h3>Только официальные API.</h3>
                 <p className="muted">
-                  Если кодек и частота подходят — видео не перекодируется вовсе. Иначе H.264
-                  в исходном разрешении до 4K, HDR корректно переводится в SDR.
+                  Пароли от соцсетей не вводятся. Доступы хранятся зашифрованными
+                  (AES-256-GCM) и отзываются у площадки при отключении.
                 </p>
               </div>
               <div className="tile">
-                <span className="tile__num">Instagram Reels</span>
-                <h3>Точно по спецификации.</h3>
+                <span className="tile__num">Вход</span>
+                <h3>Закрытый сервис для своих.</h3>
                 <p className="muted">
-                  1080 по короткой стороне, до 24 Мбит/с, 23–60 fps, AAC 48 кГц — ровно то,
-                  что Instagram показывает, чтобы его собственное сжатие не съело детали.
+                  Войти могут только приглашённые. Вход по ссылке на почту или по паролю.
                 </p>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section band">
-        <div className="grid">
-          <div className="z-basic">
-            <h2>Безопасность.</h2>
-            <dl className="spec" style={{ marginTop: "var(--sp-md)" }}>
-              <div>
-                <dt>Вход</dt>
-                <dd>По одноразовой ссылке, без паролей</dd>
-              </div>
-              <div>
-                <dt>Доступы к сетям</dt>
-                <dd>AES-256-GCM, привязка к владельцу</dd>
-              </div>
-              <div>
-                <dt>Публикация</dt>
-                <dd>Только официальные API площадок</dd>
-              </div>
-              <div>
-                <dt>Отключение</dt>
-                <dd>Токен удаляется и отзывается у площадки</dd>
-              </div>
-            </dl>
           </div>
         </div>
       </section>

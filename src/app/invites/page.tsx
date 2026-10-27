@@ -45,7 +45,7 @@ export default async function InvitesPage({
           )}
 
           <section className="panel stack-sm" aria-labelledby="new-invite">
-            <h2 id="new-invite" style={{ fontSize: "var(--fs-lg)" }}>Новый код.</h2>
+            <h2 id="new-invite" style={{ fontSize: "var(--fs-lg)" }}>Новый код</h2>
             <form action="/api/invites" method="post" className="stack-sm">
               <div className="tiles tiles--2" style={{ gap: "var(--sp-sm)" }}>
                 <div className="field">
@@ -79,19 +79,19 @@ export default async function InvitesPage({
           </section>
 
           <section aria-labelledby="list-invites" className="stack-sm">
-            <h2 id="list-invites" style={{ fontSize: "var(--fs-lg)" }}>Выданные коды.</h2>
+            <h2 id="list-invites" style={{ fontSize: "var(--fs-lg)" }}>Выданные коды</h2>
             <p className="meta">Ссылка для входа: <code>{loginUrl}</code></p>
             {invites.length === 0 ? (
               <p className="muted">Пока нет кодов.</p>
             ) : (
-              <ul className="rows">
+              <ul className="rows rows--cards">
                 {invites.map((inv) => {
                   const used = Boolean(inv.usedAt);
                   const expired = !used && inv.expiresAt && inv.expiresAt.getTime() < now;
                   return (
-                    <li key={inv.id} className="between">
+                    <li key={inv.id} className="panel panel--white between">
                       <div style={{ minWidth: 0 }}>
-                        <code style={{ fontSize: "1rem" }}>{inv.code}</code>
+                        <code style={{ fontSize: "1.1rem", fontWeight: 600 }}>{inv.code}</code>
                         <p className="meta" style={{ marginTop: 6 }}>
                           {inv.role === "VIEWER" ? "Наблюдатель" : "Участник"}
                           {" · "}

@@ -80,7 +80,7 @@ export default async function PostsPage({
           )}
           {posts.length === 0 ? (
             <div className="panel stack-sm">
-              <h2 style={{ fontSize: "var(--fs-lg)" }}>Пока пусто.</h2>
+              <h2 style={{ fontSize: "var(--fs-lg)" }}>Пока пусто</h2>
               <p className="muted">Загрузите первое видео — оно уйдёт во все подключённые сети.</p>
               <div><Link className="btn" href="/compose">Создать пост</Link></div>
             </div>

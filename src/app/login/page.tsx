@@ -21,7 +21,7 @@ export default async function LoginPage({
   return (
     <main className="grid section">
       <div className="z-narrow" style={{ maxWidth: 520 }}>
-        <h1>Вход.</h1>
+        <h1>Вход</h1>
         <p className="lead" style={{ marginTop: "var(--sp-sm)" }}>
           Войдите по паролю или получите одноразовую ссылку на почту.
         </p>
