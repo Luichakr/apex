@@ -6,6 +6,7 @@ import { configuredProviders } from "@/lib/env";
 import { prisma } from "@/lib/db";
 import Icon from "@/components/Icon";
 import TelegramConnect from "@/components/TelegramConnect";
+import { demoAccounts, isDemo } from "@/lib/demo";
 
 export const metadata: Metadata = { title: "Аккаунты" };
 export const dynamic = "force-dynamic";
@@ -80,7 +81,7 @@ export default async function AccountsPage({
   const configured = configuredProviders();
   const ownerId = await dataOwnerId(user);
   const isViewer = user.role === "VIEWER";
-  const accounts = await prisma.socialAccount.findMany({
+  const accounts = (await isDemo()) ? demoAccounts() : await prisma.socialAccount.findMany({
     where: { userId: ownerId },
     orderBy: { createdAt: "asc" },
     select: {

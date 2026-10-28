@@ -3,11 +3,17 @@ import { readFile } from "node:fs/promises";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { posterPathFor } from "@/lib/video";
+import { demoThumbSvg } from "@/lib/demo";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
   const { id } = await params;
+  if (id.startsWith("demo-")) {
+    return new Response(demoThumbSvg(Number(id.slice(5)) || 0), {
+      headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400" },
+    });
+  }
   const post = await prisma.post.findFirst({
     where: { id, userId: user.id },
     select: { mediaPath: true, mediaDeletedAt: true },

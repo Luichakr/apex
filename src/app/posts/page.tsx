@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import Icon from "@/components/Icon";
 import PostCard from "@/components/PostCard";
 import AutoRefresh from "./auto-refresh";
+import { demoPostRows, isDemo } from "@/lib/demo";
 
 export const metadata: Metadata = { title: "Публикации" };
 export const dynamic = "force-dynamic";
@@ -35,7 +36,7 @@ export default async function PostsPage({
   const sp = await searchParams;
 
   const ownerId = await dataOwnerId(user);
-  const posts = await prisma.post.findMany({
+  const posts = (await isDemo()) ? demoPostRows().slice(0, 50) : await prisma.post.findMany({
     where: { userId: ownerId },
     orderBy: { createdAt: "desc" },
     take: 50,

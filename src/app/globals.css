@@ -863,3 +863,7 @@ select.f { cursor: pointer; }
 .todo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .todo li { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid rgba(79, 80, 89, 0.16); border-radius: var(--r-xl); }
 .todo li svg { width: 18px; height: 18px; flex: none; margin-top: 3px; color: var(--ink-high); }
+.demobar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 12px var(--app-pad) 0; padding: 10px 16px; border-radius: var(--r-xl); background: rgba(172, 81, 2, 0.08); border: 1px solid rgba(172, 81, 2, 0.25); color: var(--warn); font-size: var(--fs-xs); }
+.demobar b { font-weight: 600; }
+.sb__link[aria-pressed="true"] { color: var(--warn); }
+.sb__link[aria-pressed="true"] svg { color: var(--warn); }

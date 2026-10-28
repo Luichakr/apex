@@ -13,6 +13,7 @@ import { connection } from "./redis";
 import { getDecryptedAccount } from "./accounts";
 import { getProvider } from "./providers";
 import type { DecryptedAccount } from "./providers/types";
+import { demoHistory, isDemo } from "./demo";
 
 export type HistoryItem = {
   id: string;
@@ -249,6 +250,7 @@ async function apexRecent(userId: string, provider: Provider): Promise<HistoryIt
 
 /** Статистика по всем подключённым сетям пользователя (с кэшем). */
 export async function loadHistory(userId: string, force = false): Promise<NetworkHistory[]> {
+  if (await isDemo()) return demoHistory();
   const accounts = await prisma.socialAccount.findMany({
     where: { userId },
     orderBy: [{ provider: "asc" }, { createdAt: "asc" }],

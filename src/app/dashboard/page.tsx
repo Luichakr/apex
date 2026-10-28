@@ -10,6 +10,7 @@ import { PROVIDER_LABEL } from "@/lib/limits";
 import Icon from "@/components/Icon";
 import StatsTable from "@/components/StatsTable";
 import AutoRefresh from "@/app/posts/auto-refresh";
+import { demoAccounts, demoPostRows, isDemo } from "@/lib/demo";
 
 export const metadata: Metadata = { title: "Обзор" };
 export const dynamic = "force-dynamic";
@@ -31,7 +32,17 @@ export default async function DashboardPage() {
   const ownerId = await dataOwnerId(user);
   const period = parsePeriod({ p: "month" });
 
-  const [accounts, inWork, failed, worker, networks] = await Promise.all([
+  const demo = await isDemo();
+  const demoRows = demo ? demoPostRows() : [];
+  const [accounts, inWork, failed, worker, networks] = demo
+    ? [
+        demoAccounts(),
+        demoRows.filter((p) => p.status === "SCHEDULED" || p.status === "PUBLISHING").length,
+        demoRows.flatMap((p) => p.targets).filter((t) => t.status === "FAILED").length,
+        { alive: true, reachable: true, lastSeen: new Date() },
+        await loadHistory(ownerId),
+      ]
+    : await Promise.all([
     prisma.socialAccount.findMany({
       where: { userId: ownerId },
       select: { id: true, provider: true, displayName: true, needsReconnect: true, tokenExpiresAt: true, refreshTokenEnc: true },

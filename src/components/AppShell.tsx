@@ -4,13 +4,15 @@ import { canPublish } from "@/lib/auth";
 import Icon, { Mark } from "./Icon";
 import SideNav, { type NavGroup } from "./SideNav";
 import HeaderNav from "./HeaderNav";
+import { isDemo } from "@/lib/demo";
 
 /**
  * Каркас приложения для вошедшего пользователя: боковое меню слева, контент
  * на всю оставшуюся ширину. На телефоне меню прячется в шапку.
  */
-export default function AppShell({ user, children }: { user: CurrentUser; children: React.ReactNode }) {
+export default async function AppShell({ user, children }: { user: CurrentUser; children: React.ReactNode }) {
   const publish = canPublish(user);
+  const demo = await isDemo();
   const groups: NavGroup[] = [
     {
       items: [
@@ -45,6 +47,12 @@ export default function AppShell({ user, children }: { user: CurrentUser; childr
         )}
         <SideNav groups={groups} />
         <div className="sb__foot">
+          <form action="/api/demo" method="post">
+            <input type="hidden" name="on" value={demo ? "0" : "1"} />
+            <button type="submit" className="sb__link" aria-pressed={demo}>
+              <Icon name="eye" size={20} /><span>{demo ? "Выключить демо" : "Демо-режим"}</span>
+            </button>
+          </form>
           <div className="sb__user" title={user.email}>{user.name ?? user.email}</div>
           <form action="/api/auth/logout" method="post">
             <button type="submit" className="sb__link sb__logout"><Icon name="logout" size={20} /><span>Выйти</span></button>
@@ -60,6 +68,15 @@ export default function AppShell({ user, children }: { user: CurrentUser; childr
           </Link>
           <HeaderNav items={flat} signedIn canPublish={publish} />
         </header>
+        {demo && (
+          <div className="demobar" role="status">
+            <span><b>Демо-режим.</b> Все цифры и публикации вымышленные, как будто APX работает полгода. Публикация и подключение сетей в демо не работают.</span>
+            <form action="/api/demo" method="post">
+              <input type="hidden" name="on" value="0" />
+              <button type="submit" className="btn btn--tool btn--sm">Выключить</button>
+            </form>
+          </div>
+        )}
         {children}
       </div>
     </div>

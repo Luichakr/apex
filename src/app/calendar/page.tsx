@@ -6,6 +6,7 @@ import { getCurrentUser, dataOwnerId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PROVIDER_LABEL } from "@/lib/limits";
 import Icon from "@/components/Icon";
+import { demoPostRows, isDemo } from "@/lib/demo";
 
 export const metadata: Metadata = { title: "Календарь" };
 export const dynamic = "force-dynamic";
@@ -49,7 +50,11 @@ export default async function CalendarPage({
   // Берём с запасом в сутки по краям: границы месяца считаем в Киеве, а не в UTC.
   const from = new Date(Date.UTC(y, mo - 1, 1) - 86_400_000);
   const to = new Date(Date.UTC(y, mo, 1) + 86_400_000);
-  const posts = await prisma.post.findMany({
+  const posts = (await isDemo())
+    ? demoPostRows()
+        .filter((p) => { const d = p.scheduledAt ?? p.createdAt; return d >= from && d < to; })
+        .map((p) => ({ id: p.id, caption: p.caption, status: p.status, scheduledAt: p.scheduledAt, createdAt: p.createdAt, targets: p.targets.map((t) => ({ provider: t.provider })) }))
+    : await prisma.post.findMany({
     where: {
       userId: ownerId,
       OR: [

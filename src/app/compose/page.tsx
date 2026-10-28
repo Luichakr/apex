@@ -5,6 +5,7 @@ import { getCurrentUser, canPublish } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import Icon from "@/components/Icon";
 import ComposeForm from "./compose-form";
+import { demoAccounts, isDemo } from "@/lib/demo";
 
 export const metadata: Metadata = { title: "Новый пост" };
 export const dynamic = "force-dynamic";
@@ -14,7 +15,9 @@ export default async function ComposePage() {
   if (!user) redirect("/login");
   if (!canPublish(user)) redirect("/posts");
 
-  const accounts = await prisma.socialAccount.findMany({
+  const accounts = (await isDemo())
+    ? demoAccounts().map((a) => ({ id: a.id, provider: a.provider, displayName: a.displayName, meta: a.meta as never }))
+    : await prisma.socialAccount.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "asc" },
     select: { id: true, provider: true, displayName: true, meta: true },
