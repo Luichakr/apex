@@ -35,6 +35,8 @@ const SCOPES = [
   // Лайки и комментарии друзьям. У каналов, подключённых раньше, этого права
   // нет — им покажем просьбу переподключить канал.
   "https://www.googleapis.com/auth/youtube.force-ssl",
+  // Статистика: среднее время просмотра, досмотр, подписки с видео.
+  "https://www.googleapis.com/auth/yt-analytics.readonly",
 ];
 
 function supportFail(res: Response, text: string): PlatformError {

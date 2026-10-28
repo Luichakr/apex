@@ -8,6 +8,7 @@ import { PROVIDER_LABEL } from "@/lib/limits";
 import Icon from "@/components/Icon";
 import StatsTable from "@/components/StatsTable";
 import PeriodPicker from "@/components/PeriodPicker";
+import TypicalVideo from "@/components/TypicalVideo";
 
 export const metadata: Metadata = { title: "Статистика" };
 export const dynamic = "force-dynamic";
@@ -92,6 +93,12 @@ export default async function StatsPage({ searchParams }: { searchParams: Promis
                   )}
                 </div>
                 {n.note && <p className="meta">{n.note}</p>}
+                {n.items.length > 1 && (
+                  <details className="typ-wrap" open>
+                    <summary className="meta">Ваше типичное видео: средние доли по всем {n.items.length} публикациям и отличие за выбранный период</summary>
+                    <TypicalVideo items={n.items} recent={items} />
+                  </details>
+                )}
                 {items.length === 0 ? (
                   !n.note && <p className="muted">За этот период публикаций нет.</p>
                 ) : (

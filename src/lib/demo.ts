@@ -145,6 +145,18 @@ function metricsFor(p: DemoPost, provider: Provider): HistoryItem {
     saves: prof.save ? Math.round(views * prof.save * r()) : undefined,
     durationSec: provider === "YOUTUBE" ? 15 + Math.round(r() * 45) : undefined,
     kind: provider === "INSTAGRAM" ? "REELS" : undefined,
+    ...(provider === "YOUTUBE" || provider === "INSTAGRAM"
+      ? (() => {
+          const dur = provider === "YOUTUBE" ? 15 + Math.round(r() * 45) : 12 + Math.round(r() * 30);
+          const ret = 0.3 + r() * 0.45;
+          return {
+            avgWatchSec: Math.round(dur * ret * 10) / 10,
+            retentionPct: provider === "YOUTUBE" ? Math.round(ret * 1000) / 10 : undefined,
+            follows: Math.round(views * 0.0015 * r()),
+            profileVisits: provider === "INSTAGRAM" ? Math.round(views * 0.01 * r()) : undefined,
+          };
+        })()
+      : {}),
   };
 }
 

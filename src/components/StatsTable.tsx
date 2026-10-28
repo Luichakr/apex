@@ -3,7 +3,7 @@ import { engagementRate } from "@/lib/history";
 import { fmtDateTime, fmtDur, fmtNum, fmtPct } from "@/lib/format";
 import Icon from "./Icon";
 
-type Col = { key: string; label: string; title: string; get: (i: HistoryItem) => number | null | undefined; pct?: boolean };
+type Col = { key: string; label: string; title: string; get: (i: HistoryItem) => number | null | undefined; pct?: boolean; sec?: boolean };
 
 const COLS: Col[] = [
   { key: "views", label: "Просм.", title: "Просмотры", get: (i) => i.views },
@@ -14,7 +14,12 @@ const COLS: Col[] = [
   { key: "shares", label: "Репосты", title: "Репосты", get: (i) => i.shares },
   { key: "saves", label: "Сохр.", title: "Сохранения", get: (i) => i.saves },
   { key: "er", label: "ER", title: "Вовлечённость: реакции к просмотрам", get: (i) => engagementRate(i), pct: true },
+  { key: "avg", label: "Ср. просм.", title: "Среднее время просмотра, секунды", get: (i) => i.avgWatchSec, sec: true },
+  { key: "ret", label: "Досмотр", title: "Какую долю ролика в среднем досматривают", get: (i) => i.retentionPct, pct: true },
+  { key: "follows", label: "Подп.", title: "Подписались после этого видео", get: (i) => i.follows },
+  { key: "visits", label: "В профиль", title: "Перешли в профиль с этого видео", get: (i) => i.profileVisits },
 ];
+const fmtVal = (c: Col, v: number) => (c.pct ? fmtPct(v) : c.sec ? `${v} с` : fmtNum(v));
 
 /** Таблица публикаций: маленькая обложка, заголовок, дата и все показатели в колонках. */
 export default function StatsTable({ items, vertical }: { items: HistoryItem[]; vertical?: boolean }) {
@@ -67,7 +72,7 @@ export default function StatsTable({ items, vertical }: { items: HistoryItem[]; 
                 const warn = c.key === "unanswered" && typeof v === "number" && v > 0;
                 return (
                   <td key={c.key} className="st__n" data-above={above && c.key !== "unanswered" ? "1" : undefined} data-below={below && c.key !== "unanswered" ? "1" : undefined} data-warn={warn ? "1" : undefined}>
-                    {v === undefined || v === null ? <span className="muted">—</span> : c.pct ? fmtPct(v) : fmtNum(v)}
+                    {v === undefined || v === null ? <span className="muted">—</span> : fmtVal(c, v)}
                   </td>
                 );
               })}
@@ -83,7 +88,7 @@ export default function StatsTable({ items, vertical }: { items: HistoryItem[]; 
                 const a = avgs[c.key];
                 return (
                   <td key={c.key} className="st__n">
-                    {a === null ? "—" : c.pct ? fmtPct(a) : fmtNum(Math.round(a))}
+                    {a === null ? "—" : c.pct || c.sec ? fmtVal(c, Math.round(a * 10) / 10) : fmtNum(Math.round(a))}
                   </td>
                 );
               })}

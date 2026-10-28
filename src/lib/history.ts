@@ -31,6 +31,14 @@ export type HistoryItem = {
   saves?: number;
   durationSec?: number;
   kind?: string;
+  /** Среднее время просмотра, секунды. */
+  avgWatchSec?: number;
+  /** Досмотр: доля ролика, которую в среднем смотрят, в процентах (YouTube). */
+  retentionPct?: number;
+  /** Подписались после этого видео. */
+  follows?: number;
+  /** Перешли в профиль с этого видео (Instagram). */
+  profileVisits?: number;
 };
 
 export type NetworkHistory = {
@@ -127,6 +135,28 @@ async function youtubeRecent(acc: DecryptedAccount): Promise<HistoryItem[]> {
     }).length;
   });
 
+  // YouTube Analytics: один запрос на все видео. Если API не включён в Google
+  // Cloud или права нет — просто без этих колонок.
+  const analytics = new Map<string, { avg: number; pct: number; subs: number; shares: number }>();
+  try {
+    const q = new URL("https://youtubeanalytics.googleapis.com/v2/reports");
+    q.searchParams.set("ids", "channel==MINE");
+    q.searchParams.set("startDate", "2010-01-01");
+    q.searchParams.set("endDate", new Date().toISOString().slice(0, 10));
+    q.searchParams.set("metrics", "averageViewDuration,averageViewPercentage,subscribersGained,shares");
+    q.searchParams.set("dimensions", "video");
+    q.searchParams.set("filters", `video==${ids.join(",")}`);
+    const r = await fetch(q, { headers: auth, cache: "no-store" });
+    if (r.ok) {
+      const j = (await r.json()) as { rows?: (string | number)[][] };
+      for (const row of j.rows ?? []) {
+        analytics.set(String(row[0]), { avg: Number(row[1]), pct: Number(row[2]), subs: Number(row[3]), shares: Number(row[4]) });
+      }
+    }
+  } catch {
+    /* необязательно */
+  }
+
   return videos.map((v, i) => ({
     id: v.id,
     title: v.snippet.title,
@@ -138,6 +168,10 @@ async function youtubeRecent(acc: DecryptedAccount): Promise<HistoryItem[]> {
     comments: num(v.statistics?.commentCount),
     unanswered: unanswered[i],
     durationSec: isoDuration(v.contentDetails?.duration),
+    shares: analytics.get(v.id)?.shares,
+    avgWatchSec: analytics.has(v.id) ? Math.round(analytics.get(v.id)!.avg * 10) / 10 : undefined,
+    retentionPct: analytics.has(v.id) ? Math.round(analytics.get(v.id)!.pct * 10) / 10 : undefined,
+    follows: analytics.get(v.id)?.subs,
   }));
 }
 
@@ -165,15 +199,22 @@ async function instagramRecent(acc: DecryptedAccount): Promise<HistoryItem[]> {
 
   const extra = await pooled(items, 4, async (m) => {
     // Охваты и просмотры — отдельным запросом; без права insights просто пропускаем.
-    const u = new URL(`${IG}/${m.id}/insights`);
-    u.searchParams.set("metric", "reach,views,shares,saved");
-    u.searchParams.set("access_token", acc.accessToken);
-    const r = await fetch(u, { cache: "no-store" }).catch(() => null);
-    const j = r ? await r.json().catch(() => null) : null;
     const by = new Map<string, number>();
-    for (const row of (j?.data ?? []) as { name?: string; values?: { value?: number }[] }[]) {
-      if (row.name && typeof row.values?.[0]?.value === "number") by.set(row.name, row.values[0].value);
-    }
+    const collect = async (metric: string) => {
+      const q = new URL(`${IG}/${m.id}/insights`);
+      q.searchParams.set("metric", metric);
+      q.searchParams.set("access_token", acc.accessToken);
+      const r = await fetch(q, { cache: "no-store" }).catch(() => null);
+      const j = r ? await r.json().catch(() => null) : null;
+      for (const row of (j?.data ?? []) as { name?: string; values?: { value?: number }[] }[]) {
+        if (row.name && typeof row.values?.[0]?.value === "number") by.set(row.name, row.values[0].value);
+      }
+    };
+    await collect("reach,views,shares,saved");
+    // Время просмотра есть только у Reels; подписки и переходы — у всех. Если
+    // сеть не знает метрику, она отвечает ошибкой на весь запрос — поэтому отдельно.
+    if (m.media_product_type === "REELS") await collect("ig_reels_avg_watch_time,ig_reels_video_view_total_time");
+    await collect("follows,profile_visits");
     // Неотвеченные: ветки, где нет нашего ответа. Нужно право manage_comments.
     let unanswered: number | undefined = m.comments_count ? undefined : 0;
     if (m.comments_count) {
@@ -207,6 +248,9 @@ async function instagramRecent(acc: DecryptedAccount): Promise<HistoryItem[]> {
     reach: extra[i].by.get("reach"),
     shares: extra[i].by.get("shares"),
     saves: extra[i].by.get("saved"),
+    avgWatchSec: extra[i].by.has("ig_reels_avg_watch_time") ? Math.round(extra[i].by.get("ig_reels_avg_watch_time")! / 100) / 10 : undefined,
+    follows: extra[i].by.get("follows"),
+    profileVisits: extra[i].by.get("profile_visits"),
     kind: m.media_product_type,
   }));
 }

@@ -867,3 +867,13 @@ select.f { cursor: pointer; }
 .demobar b { font-weight: 600; }
 .sb__link[aria-pressed="true"] { color: var(--warn); }
 .sb__link[aria-pressed="true"] svg { color: var(--warn); }
+.typ-wrap summary { cursor: pointer; list-style: none; }
+.typ-wrap summary::-webkit-details-marker { display: none; }
+.typ-wrap summary::before { content: "▸ "; }
+.typ-wrap[open] summary::before { content: "▾ "; }
+.typ { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); margin-top: 8px; }
+.typ__item { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid rgba(79, 80, 89, 0.16); border-radius: var(--r-lg); }
+.typ__label { font-size: var(--fs-2xs); color: var(--ink-medium); }
+.typ__value { font-size: var(--fs-md); font-variant-numeric: tabular-nums; }
+.typ__diff { font-size: var(--fs-2xs); color: var(--ok); }
+.typ__diff[data-up="0"] { color: var(--error); }
